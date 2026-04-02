@@ -61,11 +61,11 @@ Baum Performance Stahl erstellt Angebote und Rechnungen bisher manuell in Excel 
 billory/
 │
 ├── docs/                          # Projektdokumentation
-│   ├── 01_lastenheft.md
-│   ├── 02_pflichtenheft.md
-│   ├── 03_datenbank-architektur.md
-│   ├── 04_api-design.md
-│   └── 05_architekturdiagramme.md
+│   ├── api-design.md
+│   ├── architecture.md
+│   ├── diagramme.md
+│   ├── lastenheft.md
+│   └── pflichtenheft.md
 │
 ├── src/
 │   ├── main/                      # Electron Main Process (Node.js)
