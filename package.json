@@ -1,0 +1,32 @@
+{
+  "name": "billory",
+  "version": "0.1.0",
+  "description": "Rechnungs- und Angebotssoftware für Baum Performance Stahl",
+  "main": "src/main/index.js",
+  "scripts": {
+    "dev:renderer": "vite",
+    "build:renderer": "vite build",
+    "dev": "electron .",
+    "build": "electron-builder"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eklipsee/billory.git"
+  },
+  "author": "Daniel Schitz",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1",
+    "typescript": "^6.0.2",
+    "vite": "^6.4.2"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  }
+}
