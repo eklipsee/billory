@@ -1,0 +1,21 @@
+CREATE TABLE settings (
+    id                 INTEGER PRIMARY KEY CHECK (id = 1),
+    company_name       TEXT NOT NULL,
+    owner_name         TEXT NOT NULL,
+    street             TEXT NOT NULL,
+    zip                TEXT NOT NULL,
+    city               TEXT NOT NULL,
+    phone              TEXT,
+    email              TEXT,
+    tax_number         TEXT NOT NULL,
+    iban               TEXT,
+    bank_name          TEXT,
+    password_hash      TEXT NOT NULL,
+    logo_path          TEXT,
+    archive_path       TEXT NOT NULL,
+    backup_path        TEXT,
+    receipts_path      TEXT,
+    reminder_template  TEXT,
+    created_at         TEXT NOT NULL,
+    updated_at         TEXT NOT NULL
+);
