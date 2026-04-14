@@ -1,7 +1,8 @@
 package de.billory.backend.customer;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -15,22 +16,29 @@ public class CustomerController {
     }
 
     @GetMapping
-    public List<Customer> getAllCustomers() {
-        return customerService.getAllCustomers();
+    public List<CustomerResponse> getAllCustomers(@RequestParam(required = false) String search) {
+        return customerService.getAllCustomers(search);
     }
 
     @GetMapping("/{id}")
-    public Customer getCustomerById(@PathVariable Integer id) {
+    public CustomerResponse getCustomerById(@PathVariable Integer id) {
         return customerService.getCustomerById(id);
     }
 
     @PostMapping
-    public Customer createCustomer(@RequestBody CreateCustomerRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public CustomerResponse createCustomer(@Valid @RequestBody CreateCustomerRequest request) {
         return customerService.createCustomer(request);
     }
 
     @DeleteMapping("/{id}")
     public void deleteCustomer(@PathVariable Integer id) {
         customerService.deleteCustomer(id);
+    }
+
+    @PutMapping("/{id}")
+    public CustomerResponse updateCustomer(@PathVariable Integer id,
+                                        @Valid @RequestBody UpdateCustomerRequest request) {
+        return customerService.updateCustomer(id, request);
     }
 }

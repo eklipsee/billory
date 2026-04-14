@@ -2,7 +2,7 @@ package de.billory.backend.customer;
 
 import jakarta.validation.constraints.NotBlank;
 
-public class CreateCustomerRequest {
+public class UpdateCustomerRequest {
 
     @NotBlank
     private String name;
@@ -17,12 +17,10 @@ public class CreateCustomerRequest {
     private String city;
 
     private String email;
-
     private String phone;
-    
     private String notes;
 
-    public CreateCustomerRequest() {
+    public UpdateCustomerRequest() {
     }
 
     public String getName() {
