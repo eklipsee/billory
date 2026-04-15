@@ -29,5 +29,11 @@ public class GlobalExceptionHandler {
         response.put("errors", errors);
 
         return response;
-    }   
+    }
+    
+    @ExceptionHandler(InvalidStatusTransitionException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleInvalidStatusTransition(InvalidStatusTransitionException ex) {
+        return Map.of("message", ex.getMessage());
+    }
 }

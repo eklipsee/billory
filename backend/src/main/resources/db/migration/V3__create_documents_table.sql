@@ -1,0 +1,20 @@
+CREATE TABLE documents (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    type               TEXT NOT NULL,
+    status             TEXT NOT NULL,
+    invoice_number     TEXT UNIQUE,
+    customer_id        INTEGER NOT NULL,
+    document_date      TEXT NOT NULL,
+    service_date       TEXT,
+    valid_until        TEXT,
+    gross_total        REAL NOT NULL,
+    net_total          REAL NOT NULL,
+    tax_total          REAL NOT NULL,
+    pdf_path           TEXT,
+    converted_from_id  INTEGER,
+    notes              TEXT,
+    created_at         TEXT NOT NULL,
+    updated_at         TEXT NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (converted_from_id) REFERENCES documents(id)
+);
