@@ -36,4 +36,16 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleInvalidStatusTransition(InvalidStatusTransitionException ex) {
         return Map.of("message", ex.getMessage());
     }
+
+    @ExceptionHandler(InvalidDocumentConversionException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleInvalidDocumentConversion(InvalidDocumentConversionException ex) {
+        return Map.of("message", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidDocumentDataException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleInvalidDocumentData(InvalidDocumentDataException ex) {
+        return Map.of("message", ex.getMessage());
+    }
 }

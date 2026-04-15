@@ -6,6 +6,9 @@ import de.billory.backend.customer.CustomerRepository;
 import org.springframework.stereotype.Service;
 import de.billory.backend.common.InvalidStatusTransitionException;
 
+import de.billory.backend.common.InvalidDocumentConversionException;
+import de.billory.backend.common.InvalidDocumentDataException;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +34,17 @@ public class DocumentService {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
 
+        if (request.getType() == DocumentType.INVOICE && request.getValidUntil() != null && !request.getValidUntil().isBlank()) {
+            throw new InvalidDocumentDataException("Invoices must not have validUntil");
+        }
+        
         String now = LocalDateTime.now().toString();
 
         Document document = new Document();
         document.setType(request.getType());
+
+        validateDocumentData(request.getType(), request.getValidUntil(), request.getServiceDate());
+
         document.setStatus(DocumentStatus.DRAFT);
         document.setCustomer(customer);
         document.setDocumentDate(request.getDocumentDate());
@@ -203,6 +213,89 @@ public class DocumentService {
             throw new InvalidStatusTransitionException(
                     "Invalid status transition from " + currentStatus + " to " + newStatus
             );
+        }
+    }
+
+    public DocumentResponse convertToInvoice(ConvertToInvoiceRequest request) {
+        Document offer = documentRepository.findById(request.getOfferId())
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        if (offer.getType() != DocumentType.OFFER) {
+            throw new InvalidDocumentConversionException("Only offers can be converted to invoices");
+        }
+
+        validateDocumentData(DocumentType.INVOICE, null, offer.getServiceDate());
+
+        List<LineItem> originalLineItems = lineItemRepository.findByDocumentIdOrderByPositionAsc(offer.getId());
+
+        String now = LocalDateTime.now().toString();
+
+        Document invoice = new Document();
+        invoice.setType(DocumentType.INVOICE);
+
+        String invoiceDate = now.substring(0, 10);
+        invoice.setInvoiceNumber(generateInvoiceNumber(invoiceDate));
+
+        invoice.setStatus(DocumentStatus.DRAFT);
+        invoice.setCustomer(offer.getCustomer());
+        invoice.setDocumentDate(invoiceDate);
+        invoice.setServiceDate(offer.getServiceDate());
+        invoice.setValidUntil(null);
+        invoice.setNotes(offer.getNotes());
+        invoice.setGrossTotal(offer.getGrossTotal());
+        invoice.setNetTotal(offer.getNetTotal());
+        invoice.setTaxTotal(offer.getTaxTotal());
+        invoice.setConvertedFrom(offer);
+        invoice.setCreatedAt(now);
+        invoice.setUpdatedAt(now);
+
+        Document savedInvoice = documentRepository.save(invoice);
+
+        List<LineItem> copiedLineItems = new ArrayList<>();
+        int position = 1;
+
+        for (LineItem original : originalLineItems) {
+            LineItem copied = new LineItem();
+            copied.setDocument(savedInvoice);
+            copied.setPosition(position);
+            copied.setDescription(original.getDescription());
+            copied.setGrossAmount(original.getGrossAmount());
+            copied.setNetAmount(original.getNetAmount());
+            copied.setTaxAmount(original.getTaxAmount());
+            copied.setTaxRate(original.getTaxRate());
+            copied.setCreatedAt(now);
+
+            copiedLineItems.add(lineItemRepository.save(copied));
+            position++;
+        }
+
+        return toResponse(savedInvoice, copiedLineItems);
+    }
+
+    private String generateInvoiceNumber(String documentDate) {
+        String yearMonth = documentDate.substring(0, 7); // z. B. 2026-04
+        long countThisMonth = documentRepository.countByTypeAndDocumentDateStartingWith(DocumentType.INVOICE, yearMonth);
+
+        long nextNumber = countThisMonth + 1;
+
+        String month = documentDate.substring(5, 7); // MM
+        String yearShort = documentDate.substring(2, 4); // JJ
+
+        return "F" + String.format("%02d", nextNumber) + month + yearShort;
+    }
+
+    private void validateDocumentData(DocumentType type, String validUntil, String serviceDate) {
+
+        if (type == DocumentType.OFFER && (validUntil == null || validUntil.isBlank())) {
+            throw new InvalidDocumentDataException("Offers must have validUntil");
+        }
+
+        if (type == DocumentType.INVOICE && validUntil != null && !validUntil.isBlank()) {
+            throw new InvalidDocumentDataException("Invoices must not have validUntil");
+        }
+
+        if (type == DocumentType.INVOICE && (serviceDate == null || serviceDate.isBlank())) {
+            throw new InvalidDocumentDataException("Invoices must have serviceDate");
         }
     }
 }

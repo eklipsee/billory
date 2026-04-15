@@ -38,4 +38,9 @@ public class DocumentController {
                                                 @Valid @RequestBody UpdateDocumentStatusRequest request) {
         return documentService.updateDocumentStatus(id, request);
     }
+
+    @PutMapping("/convert-to-invoice")
+    public DocumentResponse convertToInvoice(@Valid @RequestBody ConvertToInvoiceRequest request) {
+        return documentService.convertToInvoice(request);
+    }
 }
