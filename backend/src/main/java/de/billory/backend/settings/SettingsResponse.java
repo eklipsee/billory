@@ -18,6 +18,8 @@ public class SettingsResponse {
     private String backupPath;
     private String receiptsPath;
     private String reminderTemplate;
+    private String invoicePrivacyNotice;
+    private String offerWithdrawalNotice;
     private String createdAt;
     private String updatedAt;
 
@@ -150,6 +152,22 @@ public class SettingsResponse {
 
     public void setReminderTemplate(String reminderTemplate) {
         this.reminderTemplate = reminderTemplate;
+    }
+
+    public String getInvoicePrivacyNotice() {
+        return invoicePrivacyNotice;
+    }
+
+    public void setInvoicePrivacyNotice(String invoicePrivacyNotice) {
+        this.invoicePrivacyNotice = invoicePrivacyNotice;
+    }
+
+    public String getOfferWithdrawalNotice() {
+        return offerWithdrawalNotice;
+    }
+
+    public void setOfferWithdrawalNotice(String offerWithdrawalNotice) {
+        this.offerWithdrawalNotice = offerWithdrawalNotice;
     }
 
     public String getCreatedAt() {

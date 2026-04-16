@@ -7,6 +7,7 @@ public class DocumentResponse {
     private Integer id;
     private DocumentType type;
     private DocumentStatus status;
+    private Boolean isHistorical;
     private String invoiceNumber;
     private Integer customerId;
     private String customerName;
@@ -49,6 +50,15 @@ public class DocumentResponse {
     public void setStatus(DocumentStatus status) {
         this.status = status;
     }
+
+    public Boolean getIsHistorical() {
+        return this.isHistorical;
+    }
+
+    public void setIsHistorical(Boolean isHistorical) {
+        this.isHistorical = isHistorical;
+    }
+
 
     public String getInvoiceNumber() {
         return invoiceNumber;

@@ -3,31 +3,45 @@ package de.billory.backend.document;
 import de.billory.backend.common.NotFoundException;
 import de.billory.backend.customer.Customer;
 import de.billory.backend.customer.CustomerRepository;
+import de.billory.backend.settings.Settings;
+import de.billory.backend.settings.SettingsRepository;
+
 import org.springframework.stereotype.Service;
 import de.billory.backend.common.InvalidStatusTransitionException;
 
 import de.billory.backend.common.InvalidDocumentConversionException;
 import de.billory.backend.common.InvalidDocumentDataException;
 import java.util.stream.Collectors;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 @Service
 public class DocumentService {
 
     private static final double TAX_RATE = 19.0;
 
+    private final SettingsRepository settingsRepository;
     private final DocumentRepository documentRepository;
     private final LineItemRepository lineItemRepository;
     private final CustomerRepository customerRepository;
 
     public DocumentService(DocumentRepository documentRepository,
-                           LineItemRepository lineItemRepository,
-                           CustomerRepository customerRepository) {
+                       LineItemRepository lineItemRepository,
+                       CustomerRepository customerRepository,
+                       SettingsRepository settingsRepository) {
         this.documentRepository = documentRepository;
         this.lineItemRepository = lineItemRepository;
         this.customerRepository = customerRepository;
+        this.settingsRepository = settingsRepository;
     }
 
     public DocumentResponse createDocument(CreateDocumentRequest request) {
@@ -42,10 +56,39 @@ public class DocumentService {
 
         Document document = new Document();
         document.setType(request.getType());
+        document.setIsHistorical(Boolean.TRUE.equals(request.getIsHistorical()) ? 1 : 0);
 
         validateDocumentData(request.getType(), request.getValidUntil(), request.getServiceDate());
 
-        document.setStatus(DocumentStatus.DRAFT);
+        if (request.getType() == DocumentType.INVOICE
+                && Boolean.TRUE.equals(request.getIsHistorical())
+                && (request.getInvoiceNumber() == null || request.getInvoiceNumber().isBlank())) {
+            throw new InvalidDocumentDataException("Historical invoices must have invoiceNumber");
+        }
+
+        if (request.getType() == DocumentType.INVOICE) {
+            if (Boolean.TRUE.equals(request.getIsHistorical())) {
+                document.setInvoiceNumber(request.getInvoiceNumber());
+            } else {
+                document.setInvoiceNumber(generateInvoiceNumber(request.getDocumentDate()));
+            }
+        }
+
+        if (Boolean.TRUE.equals(request.getIsHistorical())
+        && request.getStatus() == DocumentStatus.DRAFT) {
+            throw new InvalidDocumentDataException("Historical documents must not have DRAFT status");
+        }
+
+        if (!Boolean.TRUE.equals(request.getIsHistorical()) && request.getStatus() != null) {
+            throw new InvalidDocumentDataException("Status must not be provided for non-historical documents");
+        }
+
+        if (Boolean.TRUE.equals(request.getIsHistorical()) && request.getStatus() != null) {
+            document.setStatus(request.getStatus());
+        } else {
+            document.setStatus(DocumentStatus.DRAFT);
+        }
+
         document.setCustomer(customer);
         document.setDocumentDate(request.getDocumentDate());
         document.setServiceDate(request.getServiceDate());
@@ -106,6 +149,7 @@ public class DocumentService {
         response.setId(document.getId());
         response.setType(document.getType());
         response.setStatus(document.getStatus());
+        response.setIsHistorical(document.getIsHistorical() != null && document.getIsHistorical() == 1);
         response.setInvoiceNumber(document.getInvoiceNumber());
         response.setCustomerId(document.getCustomer().getId());
         response.setCustomerName(document.getCustomer().getName());
@@ -233,6 +277,8 @@ public class DocumentService {
         Document invoice = new Document();
         invoice.setType(DocumentType.INVOICE);
 
+        invoice.setIsHistorical(0);
+
         String invoiceDate = now.substring(0, 10);
         invoice.setInvoiceNumber(generateInvoiceNumber(invoiceDate));
 
@@ -297,5 +343,97 @@ public class DocumentService {
         if (type == DocumentType.INVOICE && (serviceDate == null || serviceDate.isBlank())) {
             throw new InvalidDocumentDataException("Invoices must have serviceDate");
         }
+    }
+
+    public void updatePdfPath(Integer documentId, String pdfPath) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        document.setPdfPath(pdfPath);
+        document.setUpdatedAt(LocalDateTime.now().toString());
+
+        documentRepository.save(document);
+    }
+
+    public void markDocumentAsOpenIfDraft(Integer documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        if (document.getStatus() == DocumentStatus.DRAFT) {
+            document.setStatus(DocumentStatus.OPEN);
+            document.setUpdatedAt(LocalDateTime.now().toString());
+            documentRepository.save(document);
+        }
+    }
+
+    public DocumentResponse attachPdf(Integer id, AttachPdfRequest request) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        if (document.getIsHistorical() == null || document.getIsHistorical() != 1) {
+            throw new InvalidDocumentDataException("PDF attachment is only allowed for historical documents");
+        }
+
+        Path sourcePath = Path.of(request.getSourceFilePath());
+
+        if (!Files.exists(sourcePath)) {
+            throw new NotFoundException("Source PDF file not found");
+        }
+
+        if (!request.getSourceFilePath().toLowerCase().endsWith(".pdf")) {
+            throw new InvalidDocumentDataException("Only PDF files can be attached");
+        }
+
+        Path targetDir = buildDocumentArchiveDirectory(document);
+        try {
+            Files.createDirectories(targetDir);
+
+            String targetFileName = buildDocumentPdfFileName(document);
+            Path targetPath = targetDir.resolve(targetFileName);
+
+            Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+            document.setPdfPath(targetPath.toAbsolutePath().toString());
+            document.setUpdatedAt(LocalDateTime.now().toString());
+
+            Document savedDocument = documentRepository.save(document);
+            List<LineItem> lineItems = lineItemRepository.findByDocumentIdOrderByPositionAsc(id);
+
+            return toResponse(savedDocument, lineItems);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to attach PDF", e);
+        }
+    }
+
+    private Path buildDocumentArchiveDirectory(Document document) {
+        Settings settings = settingsRepository.findById(1)
+                .orElseThrow(() -> new NotFoundException("Settings not found"));
+
+        String basePath = settings.getArchivePath();
+
+        if (basePath == null || basePath.isBlank()) {
+            basePath = "generated-pdfs";
+        }
+
+        String typeFolder = document.getType() == DocumentType.INVOICE
+                ? "Rechnungen"
+                : "Angebote";
+
+        String year = "unknown";
+        try {
+            year = document.getDocumentDate().substring(0, 4);
+        } catch (Exception ignored) {
+        }
+
+        return Path.of(basePath, typeFolder, year);
+    }
+
+    private String buildDocumentPdfFileName(Document document) {
+        if (document.getType() == DocumentType.INVOICE && document.getInvoiceNumber() != null && !document.getInvoiceNumber().isBlank()) {
+            return "Rechnung_" + document.getInvoiceNumber() + ".pdf";
+        }
+
+        return "Angebot_" + document.getId() + ".pdf";
     }
 }

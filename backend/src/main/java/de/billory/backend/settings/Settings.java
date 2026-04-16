@@ -57,6 +57,12 @@ public class Settings {
     @Column(name = "reminder_template")
     private String reminderTemplate;
 
+    @Column(name = "invoice_privacy_notice")
+    private String invoicePrivacyNotice;
+
+    @Column(name = "offer_withdrawal_notice")
+    private String offerWithdrawalNotice;
+
     @Column(name = "created_at", nullable = false)
     private String createdAt;
 
@@ -200,6 +206,22 @@ public class Settings {
 
     public void setReminderTemplate(String reminderTemplate) {
         this.reminderTemplate = reminderTemplate;
+    }
+
+    public String getInvoicePrivacyNotice() {
+        return invoicePrivacyNotice;
+    }
+
+    public void setInvoicePrivacyNotice(String invoicePrivacyNotice) {
+        this.invoicePrivacyNotice = invoicePrivacyNotice;
+    }
+
+    public String getOfferWithdrawalNotice() {
+        return offerWithdrawalNotice;
+    }
+
+    public void setOfferWithdrawalNotice(String offerWithdrawalNotice) {
+        this.offerWithdrawalNotice = offerWithdrawalNotice;
     }
 
     public String getCreatedAt() {

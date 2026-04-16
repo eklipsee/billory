@@ -2,6 +2,7 @@ CREATE TABLE documents (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     type               TEXT NOT NULL,
     status             TEXT NOT NULL,
+    is_historical      INTEGER NOT NULL DEFAULT 0,
     invoice_number     TEXT UNIQUE,
     customer_id        INTEGER NOT NULL,
     document_date      TEXT NOT NULL,

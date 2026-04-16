@@ -19,6 +19,9 @@ public class Document {
     @Column(nullable = false)
     private DocumentStatus status;
 
+    @Column(name = "is_historical", nullable = false)
+    private Integer isHistorical;
+
     @Column(name = "invoice_number")
     private String invoiceNumber;
 
@@ -80,6 +83,14 @@ public class Document {
 
     public void setStatus(DocumentStatus status) {
         this.status = status;
+    }
+
+    public Integer getIsHistorical() {
+        return this.isHistorical;
+    }
+
+    public void setIsHistorical(Integer isHistorical) {
+        this.isHistorical = isHistorical;
     }
 
     public String getInvoiceNumber() {

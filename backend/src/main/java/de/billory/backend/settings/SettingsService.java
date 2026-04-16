@@ -49,6 +49,8 @@ public class SettingsService {
         settings.setBackupPath(request.getBackupPath());
         settings.setReceiptsPath(request.getReceiptsPath());
         settings.setReminderTemplate(request.getReminderTemplate());
+        settings.setInvoicePrivacyNotice(request.getInvoicePrivacyNotice());
+        settings.setOfferWithdrawalNotice(request.getOfferWithdrawalNotice());
         settings.setCreatedAt(now);
         settings.setUpdatedAt(now);
 
@@ -75,6 +77,8 @@ public class SettingsService {
         settings.setBackupPath(request.getBackupPath());
         settings.setReceiptsPath(request.getReceiptsPath());
         settings.setReminderTemplate(request.getReminderTemplate());
+        settings.setInvoicePrivacyNotice(request.getInvoicePrivacyNotice());
+        settings.setOfferWithdrawalNotice(request.getOfferWithdrawalNotice());
         settings.setUpdatedAt(LocalDateTime.now().toString());
 
         return toResponse(settingsRepository.save(settings));
@@ -99,6 +103,8 @@ public class SettingsService {
         response.setBackupPath(settings.getBackupPath());
         response.setReceiptsPath(settings.getReceiptsPath());
         response.setReminderTemplate(settings.getReminderTemplate());
+        response.setInvoicePrivacyNotice(settings.getInvoicePrivacyNotice());
+        response.setOfferWithdrawalNotice(settings.getOfferWithdrawalNotice());
         response.setCreatedAt(settings.getCreatedAt());
         response.setUpdatedAt(settings.getUpdatedAt());
 

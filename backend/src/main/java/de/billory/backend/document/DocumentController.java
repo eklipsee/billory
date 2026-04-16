@@ -43,4 +43,10 @@ public class DocumentController {
     public DocumentResponse convertToInvoice(@Valid @RequestBody ConvertToInvoiceRequest request) {
         return documentService.convertToInvoice(request);
     }
+
+    @PostMapping("/{id}/attach-pdf")
+    public DocumentResponse attachPdf(@PathVariable Integer id,
+                                    @Valid @RequestBody AttachPdfRequest request) {
+        return documentService.attachPdf(id, request);
+    }
 }

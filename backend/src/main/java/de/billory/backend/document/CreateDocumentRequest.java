@@ -11,6 +11,12 @@ public class CreateDocumentRequest {
     @NotNull
     private DocumentType type;
 
+    private Boolean isHistorical;
+
+    private String invoiceNumber;
+
+    private DocumentStatus status;
+
     @NotNull
     private Integer customerId;
 
@@ -36,6 +42,30 @@ public class CreateDocumentRequest {
 
     public void setType(DocumentType type) {
         this.type = type;
+    }
+
+    public Boolean getIsHistorical() {
+        return this.isHistorical;
+    }
+
+    public DocumentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(DocumentStatus status) {
+        this.status = status;
+    }
+
+    public void setIsHistorical(Boolean isHistorical) {
+        this.isHistorical = isHistorical;
+    }
+
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
+
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
     }
 
     public Integer getCustomerId() {

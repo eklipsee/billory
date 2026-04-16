@@ -44,6 +44,10 @@ public class UpdateSettingsRequest {
 
     private String reminderTemplate;
 
+    private String invoicePrivacyNotice;
+
+    private String offerWithdrawalNotice;
+
     public UpdateSettingsRequest() {
     }
 
@@ -173,5 +177,21 @@ public class UpdateSettingsRequest {
 
     public void setReminderTemplate(String reminderTemplate) {
         this.reminderTemplate = reminderTemplate;
+    }
+
+    public String getInvoicePrivacyNotice() {
+        return invoicePrivacyNotice;
+    }
+
+    public void setInvoicePrivacyNotice(String invoicePrivacyNotice) {
+        this.invoicePrivacyNotice = invoicePrivacyNotice;
+    }
+
+    public String getOfferWithdrawalNotice() {
+        return offerWithdrawalNotice;
+    }
+
+    public void setOfferWithdrawalNotice(String offerWithdrawalNotice) {
+        this.offerWithdrawalNotice = offerWithdrawalNotice;
     }
 }
