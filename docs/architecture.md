@@ -169,6 +169,7 @@ Speichert sowohl Angebote als auch Rechnungen. Der Typ wird über die Spalte `ty
 | `created_at` | `TEXT` | ✅ | ISO-8601-Zeitstempel der Anlage |
 | `updated_at` | `TEXT` | ✅ | ISO-8601-Zeitstempel der letzten Änderung |
 
+Historische Dokumente erlauben die nachträgliche Übernahme bereits bestehender Kundenrechnungen in das System. Dabei werden vorhandene Rechnungsnummern und optionale Original-PDFs übernommen.
 ```sql
 CREATE TABLE documents (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -189,6 +190,8 @@ CREATE TABLE documents (
     created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at        TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+
 ```
 
 #### Status-Übergänge
@@ -400,6 +403,8 @@ Enthält die vollständige Erstanlage aller Tabellen und Indexe (siehe Kap. 2 un
 ---
 
 ## 7 Designentscheidungen
+
+Die PDF-Archivierung erfolgt typgetrennt und jahresbasiert, um eine übersichtliche Ablage zu gewährleisten. Normale und historische Dokumente verwenden dieselbe Archivstruktur.
 
 ### Warum SQLite?
 
