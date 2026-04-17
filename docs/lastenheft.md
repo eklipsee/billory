@@ -209,9 +209,9 @@ Rechnungen und Angebote bestehen aus einzelnen Positionen.
 
 ### Preisangaben
 
-Preisangaben erfolgen als **Bruttobetrag**.
+Preisangaben erfolgen je Position als **Nettobetrag**.
 
-Netto-Betrag und Umsatzsteuer werden automatisch berechnet.
+Umsatzsteuer und Gesamtbruttobetrag werden automatisch berechnet.
 
 ---
 
