@@ -1,8 +1,8 @@
 # Architekturdiagramme
 ## Rechnungs- und Angebotssoftware – Baum Performance Stahl
 
-**Version:** 1.0  
-**Stand:** März 2025  
+**Version:** 2.0  
+**Stand:** April 2026  
 
 ---
 
@@ -11,246 +11,335 @@
 1. [Systemarchitektur – Gesamtübersicht](#1-systemarchitektur--gesamtübersicht)
 2. [Datenfluss – Rechnung erstellen](#2-datenfluss--rechnung-erstellen)
 3. [Datenfluss – Angebot zu Rechnung konvertieren](#3-datenfluss--angebot-zu-rechnung-konvertieren)
-4. [Datenfluss – Externen Beleg erfassen](#4-datenfluss--externen-beleg-erfassen)
+4. [Datenfluss – Historische Rechnung übernehmen](#4-datenfluss--historische-rechnung-übernehmen)
+5. [Datenfluss – Vorhandenes PDF an historisches Dokument anhängen](#5-datenfluss--vorhandenes-pdf-an-historisches-dokument-anhängen)
+6. [Datenfluss – Externe Belege (geplant)](#6-datenfluss--externe-belege-geplant)
 
 ---
 
 ## 1 Systemarchitektur – Gesamtübersicht
 
-Das Diagramm zeigt alle Schichten der Anwendung und wie sie miteinander kommunizieren.
+Das Diagramm zeigt die aktuelle Systemarchitektur der Anwendung auf Basis von React, Electron und einem Spring-Boot-Backend.
 
 ```mermaid
 graph TB
     subgraph OS["Windows 10 / 11"]
 
-        subgraph Electron["Electron-Anwendung"]
+        subgraph Desktop["Electron Desktop-Anwendung"]
+            UI["React Frontend"]
+        end
 
-            subgraph Renderer["Renderer Process (React)"]
-                UI_Pages["Seiten\nKunden · Angebote\nRechnungen · Belege"]
-                UI_Components["Komponenten\nFormulare · Tabellen\nPDF-Viewer"]
-                UI_State["State Management\n(React Context)"]
-            end
-
-            Preload["Preload Script\n(Sicherheitsbrücke)\ncontextBridge"]
-
-            subgraph Main["Main Process (Node.js)"]
-                IPC["IPC Handler\nipcMain.handle()"]
-
-                subgraph Services["Service Layer"]
-                    CustomerService["CustomerService"]
-                    DocumentService["DocumentService"]
-                    PdfService["PdfService"]
-                    ExportService["ExportService"]
-                    AuthService["AuthService"]
-                    ExternalInvoiceService["ExternalInvoiceService"]
-                end
-
-                subgraph Repositories["Repository Layer"]
-                    CustomerRepo["CustomerRepository"]
-                    DocumentRepo["DocumentRepository"]
-                    ExternalInvoiceRepo["ExternalInvoiceRepository"]
-                    SettingsRepo["SettingsRepository"]
-                end
-            end
+        subgraph Backend["Spring Boot Backend"]
+            Controllers["Controller Layer"]
+            Services["Service Layer"]
+            Repositories["Repository Layer"]
+            PdfService["PDF-Service"]
         end
 
         subgraph Storage["Lokaler Speicher"]
-            DB[("SQLite\ndata.db")]
-            PDFArchive["PDF-Archiv\n/archive/"]
-            Receipts["Belege-Ordner\n/belege/YYYY/"]
-            Backup["Backup\n/backup/"]
+            DB[("SQLite / billory.db")]
+            Archive["Archiv\n<archivePath>"]
+            Receipts["Belege\n<receiptsPath>"]
+            Resources["Resources\nlogo.png"]
         end
     end
 
-    UI_Pages <--> UI_State
-    UI_Components <--> UI_State
-    UI_State -- "window.api.invoke()" --> Preload
-    Preload -- "ipcRenderer.invoke()" --> IPC
-    IPC --> Services
+    UI --> Controllers
+    Controllers --> Services
     Services --> Repositories
-    Repositories <--> DB
-    PdfService --> PDFArchive
-    ExternalInvoiceService --> Receipts
-    Services --> Backup
+    Services --> PdfService
+    Repositories --> DB
+    PdfService --> Archive
+    Services --> Receipts
+    PdfService --> Resources
 ```
 
 ### Erläuterung der Schichten
 
 | Schicht | Technologie | Aufgabe |
 |---|---|---|
-| **Renderer Process** | React + TypeScript | Benutzeroberfläche, Formulare, Ansichten |
-| **Preload Script** | Electron contextBridge | Sicherheitsschicht zwischen UI und Backend |
-| **IPC Handler** | Electron ipcMain | Empfängt Aufrufe vom Frontend, leitet weiter |
-| **Service Layer** | Node.js / TypeScript | Geschäftslogik, Berechnungen, Validierung |
-| **Repository Layer** | better-sqlite3 | Datenbankzugriffe, SQL-Abfragen |
-| **SQLite** | SQLite 3 | Lokale Datenspeicherung |
-| **Dateisystem** | Node.js fs | PDFs, Belege, Backups |
+| Frontend | React + TypeScript | Benutzeroberfläche, Formulare, Tabellen |
+| Desktop-Hülle | Electron | Lokale Desktop-Anwendung |
+| Backend API | Spring Boot (Java 21) | REST-API, Validierung, Geschäftslogik |
+| Service Layer | Spring Services | Berechnungen, Nummerierung, Statuslogik, PDF-Handling |
+| Repository Layer | Spring Data JPA / Hibernate | Datenbankzugriffe auf SQLite |
+| Datenbank | SQLite | Lokale Speicherung aller Anwendungsdaten |
+| PDF-Service | OpenPDF | Erzeugung von Angebots- und Rechnungs-PDFs |
+| Migrationen | Flyway | Versionierung und Aufbau des Schemas |
+| Dateisystem | Java NIO | Archivierung erzeugter und verknüpfter PDFs |
 
 ---
 
 ## 2 Datenfluss – Rechnung erstellen
 
-Vom Klick auf „Speichern" bis zum fertigen PDF auf der Festplatte.
+Vom Speichern einer normalen Rechnung bis zur PDF-Erzeugung.
 
 ```mermaid
 sequenceDiagram
     actor User as Benutzer
-    participant UI as React (Renderer)
-    participant IPC as IPC Handler (Main)
+    participant UI as React / Electron
+    participant API as Spring Boot Controller
     participant DS as DocumentService
-    participant PS as PdfService
     participant DR as DocumentRepository
+    participant LR as LineItemRepository
     participant DB as SQLite
+    participant PS as PdfService
     participant FS as Dateisystem
 
     User->>UI: Füllt Formular aus\n(Kunde, Positionen, Datum)
-    User->>UI: Klickt „Speichern & PDF erstellen"
+    UI->>API: POST /api/documents
 
-    UI->>UI: Validierung im Frontend\n(Pflichtfelder prüfen)
+    API->>DS: createDocument(request)
+    DS->>DS: Validierung der Eingabedaten
+    DS->>DS: Nettobeträge je Position verarbeiten
+    DS->>DS: Steuer = Netto * 0,19
+    DS->>DS: Brutto = Netto + Steuer
+    DS->>DS: Rechnungsnummer automatisch erzeugen
+    DS->>DS: Status = DRAFT
 
-    UI->>IPC: documents:create\n{ customerId, lineItems, ... }
-
-    IPC->>DS: createDocument(data)
-
-    DS->>DS: Berechnung der Beträge\nNetto = Brutto ÷ 1.19\nMwSt = Brutto - Netto
-
-    DS->>DS: Rechnungsnummer generieren\n(Abfrage: wie viele\nRechnungen diesen Monat?)
-
-    DS->>DR: save(document, lineItems)
-    DR->>DB: BEGIN TRANSACTION
+    DS->>DR: save(document)
     DR->>DB: INSERT INTO documents
-    DR->>DB: INSERT INTO line_items (n×)
-    DR->>DB: UPDATE documents SET status = 'open'
-    DR->>DB: COMMIT
-    DB-->>DR: document.id
-    DR-->>DS: document.id
 
-    DS->>PS: generatePdf(document.id)
-    PS->>DR: getById(document.id)
-    DR->>DB: SELECT documents + line_items + customer
-    DB-->>DR: Dokument mit allen Daten
-    DR-->>PS: DocumentDetail
+    loop Für jede Position
+        DS->>LR: save(lineItem)
+        LR->>DB: INSERT INTO line_items
+    end
 
-    PS->>PS: PDF-Layout aufbauen\n(Logo, Kopfzeile, Positionen,\nSummen, Pflichtangaben)
-    PS->>FS: PDF speichern\n/archive/2025/F020325.pdf
-    FS-->>PS: filePath
+    DS->>DR: save(updatedDocumentTotals)
+    DR->>DB: UPDATE documents SET totals
 
-    PS->>DR: updatePdfPath(id, filePath)
-    DR->>DB: UPDATE documents SET pdf_path
-    DB-->>DR: ok
-    DR-->>PS: ok
-    PS-->>DS: filePath
-    DS-->>IPC: { ok: true, data: { id, invoiceNumber, filePath } }
-    IPC-->>UI: ApiResponse
+    DS-->>API: DocumentResponse
+    API-->>UI: Dokument angelegt
 
-    UI->>UI: Zeigt Erfolgsmeldung\nund öffnet PDF-Vorschau
-    UI->>User: ✅ Rechnung gespeichert
+    User->>UI: PDF erzeugen
+    UI->>API: GET /api/pdf/document/{id}
+    API->>PS: createDocumentPdf(id)
+
+    PS->>DR: Dokument laden
+    DR->>DB: SELECT document
+    PS->>LR: Positionen laden
+    LR->>DB: SELECT line_items
+
+    PS->>PS: PDF aufbauen
+    PS->>FS: PDF im Archiv speichern
+    PS->>DS: pdfPath aktualisieren
+    PS->>DS: Status DRAFT -> OPEN
+
+    API-->>UI: filePath
 ```
+
+### Fachliche Regeln
+
+- Normale Rechnungen erhalten ihre Rechnungsnummer automatisch.
+- Neue Rechnungen starten immer mit Status `DRAFT`.
+- Erst bei erfolgreicher PDF-Erzeugung wird ein `DRAFT` automatisch zu `OPEN`.
+- Positionswerte werden als **Nettobeträge** eingegeben.
+- Umsatzsteuer und Bruttobetrag werden automatisch berechnet.
 
 ---
 
 ## 3 Datenfluss – Angebot zu Rechnung konvertieren
 
+Ein bestehendes Angebot wird in eine neue Rechnung überführt.
+
 ```mermaid
 sequenceDiagram
     actor User as Benutzer
-    participant UI as React (Renderer)
-    participant IPC as IPC Handler (Main)
+    participant UI as React / Electron
+    participant API as Spring Boot Controller
     participant DS as DocumentService
-    participant PS as PdfService
     participant DR as DocumentRepository
+    participant LR as LineItemRepository
     participant DB as SQLite
+    participant PS as PdfService
 
     User->>UI: Öffnet Angebot
     User->>UI: Klickt „In Rechnung umwandeln"
-    UI->>UI: Bestätigungsdialog anzeigen
-    User->>UI: Bestätigt
+    UI->>API: PUT /api/documents/convert-to-invoice
 
-    UI->>IPC: documents:convertToInvoice\n{ offerId }
+    API->>DS: convertToInvoice(request)
+    DS->>DR: Angebot laden
+    DR->>DB: SELECT document
+    DS->>LR: Angebotspositionen laden
+    LR->>DB: SELECT line_items
 
-    IPC->>DS: convertToInvoice(offerId)
+    DS->>DS: Prüfen: Typ = OFFER
+    DS->>DS: Neue Rechnungsnummer erzeugen
+    DS->>DS: Neue Rechnung anlegen
+    DS->>DS: isHistorical = false
+    DS->>DS: Status = DRAFT
 
-    DS->>DR: getById(offerId)
-    DR->>DB: SELECT document WHERE id = offerId
-    DB-->>DR: Angebotsdaten + Positionen
-    DR-->>DS: DocumentDetail
+    DS->>DR: save(invoice)
+    DR->>DB: INSERT INTO documents
 
-    DS->>DS: Prüfen: type === 'offer'?\nStatus !== 'cancelled'?
+    loop Positionen kopieren
+        DS->>LR: save(copiedLineItem)
+        LR->>DB: INSERT INTO line_items
+    end
 
-    DS->>DS: Neue Rechnungsnummer generieren
+    DS-->>API: DocumentResponse
+    API-->>UI: Rechnung angelegt
 
-    DS->>DR: createInvoiceFromOffer(offer, invoiceNumber)
-    DR->>DB: BEGIN TRANSACTION
-    DR->>DB: INSERT INTO documents\n(type='invoice', converted_from_id=offerId)
-    DR->>DB: INSERT INTO line_items\n(Positionen kopieren)
-    DR->>DB: UPDATE documents SET status='cancelled'\nWHERE id = offerId
-    DR->>DB: COMMIT
-    DB-->>DR: newInvoice.id
-    DR-->>DS: newInvoice.id
-
-    DS->>PS: generatePdf(newInvoice.id)
-    PS-->>DS: filePath
-
-    DS-->>IPC: { ok: true, data: { id, invoiceNumber } }
-    IPC-->>UI: ApiResponse
-
-    UI->>User: ✅ Rechnung F020325 erstellt
+    User->>UI: PDF erzeugen
+    UI->>API: GET /api/pdf/document/{id}
+    API->>PS: createDocumentPdf(id)
+    PS-->>API: filePath
+    API-->>UI: Rechnung erzeugt
 ```
+
+### Fachliche Regeln
+
+- Nur Dokumente vom Typ `OFFER` dürfen konvertiert werden.
+- Die neue Rechnung erhält eine neue automatische Rechnungsnummer.
+- Die konvertierte Rechnung ist **kein** historisches Dokument.
+- Die Positionsdaten werden aus dem Angebot übernommen.
 
 ---
 
-## 4 Datenfluss – Externen Beleg erfassen
+## 4 Datenfluss – Historische Rechnung übernehmen
+
+Bereits existierende Kundenrechnungen können manuell nachträglich ins System übernommen werden.
 
 ```mermaid
 sequenceDiagram
     actor User as Benutzer
-    participant UI as React (Renderer)
-    participant IPC as IPC Handler (Main)
+    participant UI as React / Electron
+    participant API as Spring Boot Controller
+    participant DS as DocumentService
+    participant DR as DocumentRepository
+    participant LR as LineItemRepository
+    participant DB as SQLite
+
+    User->>UI: Wählt „Historische Rechnung anlegen"
+    User->>UI: Gibt ein:\n- Kunde\n- Rechnungsnummer\n- Rechnungsdatum\n- Leistungsdatum\n- Status\n- Positionen
+
+    UI->>API: POST /api/documents
+
+    API->>DS: createDocument(request)
+    DS->>DS: Validierung
+    DS->>DS: isHistorical = true
+    DS->>DS: Rechnungsnummer aus Request übernehmen
+    DS->>DS: Status aus Request übernehmen
+    DS->>DS: Verbotene Statuswerte prüfen
+
+    DS->>DR: save(document)
+    DR->>DB: INSERT INTO documents
+
+    loop Für jede Position
+        DS->>LR: save(lineItem)
+        LR->>DB: INSERT INTO line_items
+    end
+
+    DS->>DR: save(updatedDocumentTotals)
+    DR->>DB: UPDATE documents SET totals
+
+    DS-->>API: DocumentResponse
+    API-->>UI: Historische Rechnung angelegt
+```
+
+### Fachliche Regeln
+
+- Historische Rechnungen verwenden eine **manuell vorgegebene Rechnungsnummer**.
+- Historische Rechnungen sind keine Entwürfe.
+- Für historische Rechnungen ist `DRAFT` nicht erlaubt.
+- Historische Rechnungen dürfen direkt z. B. als `OPEN` oder `PAID` angelegt werden.
+- Historische Rechnungen zählen nicht zur automatischen neuen Rechnungsnummernvergabe.
+
+---
+
+## 5 Datenfluss – Vorhandenes PDF an historisches Dokument anhängen
+
+Ein bereits vorhandenes PDF wird einem historischen Dokument zugeordnet und ins Archiv kopiert.
+
+```mermaid
+sequenceDiagram
+    actor User as Benutzer
+    participant UI as React / Electron
+    participant API as Spring Boot Controller
+    participant DS as DocumentService
+    participant DR as DocumentRepository
+    participant DB as SQLite
+    participant FS as Dateisystem
+
+    User->>UI: Wählt historische Rechnung
+    User->>UI: Wählt vorhandene PDF-Datei
+    UI->>API: POST /api/documents/{id}/attach-pdf\n{ sourceFilePath }
+
+    API->>DS: attachPdf(id, request)
+    DS->>DR: Dokument laden
+    DR->>DB: SELECT document
+
+    DS->>DS: Prüfen: Dokument existiert?
+    DS->>DS: Prüfen: Dokument ist historisch?
+    DS->>DS: Prüfen: Quelldatei existiert?
+    DS->>DS: Prüfen: Dateiendung = .pdf
+
+    DS->>FS: Zielordner im Archiv erzeugen
+    DS->>FS: PDF ins Archiv kopieren
+    DS->>DS: pdfPath auf neuen Archivpfad setzen
+
+    DS->>DR: save(document)
+    DR->>DB: UPDATE documents SET pdf_path
+
+    DS-->>API: aktualisierte DocumentResponse
+    API-->>UI: PDF erfolgreich verknüpft
+```
+
+### Fachliche Regeln
+
+- Das Anhängen eines vorhandenen PDFs ist **nur** bei historischen Dokumenten erlaubt.
+- Die Quelldatei wird nicht nur referenziert, sondern in das eigene Archiv kopiert.
+- Gespeichert wird der neue Archivpfad im Feld `pdfPath`.
+- Das Original kann z. B. aus Downloads, Desktop oder einem alten Ordner stammen.
+
+---
+
+## 6 Datenfluss – Externe Belege (geplant)
+
+> Hinweis: Dieser Ablauf ist fachlich vorgesehen, im aktuellen Backend-Stand jedoch noch nicht umgesetzt.
+
+```mermaid
+sequenceDiagram
+    actor User as Benutzer
+    participant UI as React / Electron
+    participant API as Spring Boot Controller
     participant EIS as ExternalInvoiceService
     participant EIR as ExternalInvoiceRepository
     participant DB as SQLite
     participant FS as Dateisystem
 
-    User->>UI: Wählt Jahr (z. B. 2025)
+    User->>UI: Wählt Jahr (z. B. 2026)
+    UI->>API: GET /api/external-invoices/year/2026
 
-    UI->>IPC: externalInvoices:scanFolder\n{ year: 2025 }
-    IPC->>EIS: scanFolder(2025)
-    EIS->>FS: Lese Ordner\n/belege/2025/*.pdf
-    FS-->>EIS: [datei1.pdf, datei2.pdf, ...]
-    EIS->>EIR: getFilePathsByYear(2025)
-    EIR->>DB: SELECT file_path WHERE year = 2025
-    DB-->>EIR: bereits erfasste Pfade
-    EIR-->>EIS: savedPaths[]
-    EIS->>EIS: Markiere bereits erfasste Dateien
-    EIS-->>IPC: [{ fileName, filePath, alreadySaved }]
-    IPC-->>UI: Dateiliste
+    API->>EIS: Lade Belege für Jahr
+    EIS->>FS: Lese Ordner <receiptsPath>/2026/
+    FS-->>EIS: PDF-Dateien
+    EIS->>EIR: Lade bereits erfasste Belege
+    EIR->>DB: SELECT external_invoices
+    DB-->>EIR: Metadaten
+    EIR-->>EIS: bekannte Belege
+    EIS-->>API: Übersicht
+    API-->>UI: Liste der Belege
 
-    UI->>User: Zeigt Liste aller PDFs\n✅ = bereits erfasst
+    User->>UI: Öffnet PDF
+    User->>UI: Gibt Datum, Beschreibung, Kategorie und Nettobetrag / Bruttobetrag ein
+    UI->>API: POST /api/external-invoices
 
-    User->>UI: Klickt auf nicht erfasste PDF
-    UI->>IPC: pdf:open { filePath }
-    IPC-->>UI: PDF öffnet sich in Vorschau
-
-    User->>UI: Gibt ein:\n- Datum\n- Beschreibung (z. B. „Tanken")\n- Kategorie (z. B. „Fahrtkosten")\n- Bruttobetrag (z. B. 85,00 €)
-
-    UI->>UI: Berechnet live:\nNetto = 85,00 ÷ 1,19 = 71,43 €\nMwSt = 85,00 - 71,43 = 13,57 €
-
-    User->>UI: Klickt „Speichern"
-
-    UI->>IPC: externalInvoices:create\n{ filePath, year, date,\ndescription, category, grossAmount }
-
-    IPC->>EIS: create(data)
-    EIS->>EIS: Netto und MwSt berechnen\nund runden
+    API->>EIS: create(request)
+    EIS->>EIS: Steuerberechnung
     EIS->>EIR: save(externalInvoice)
     EIR->>DB: INSERT INTO external_invoices
-    DB-->>EIR: id
-    EIR-->>EIS: id
-    EIS-->>IPC: { ok: true, data: { id } }
-    IPC-->>UI: ApiResponse
 
-    UI->>User: ✅ Beleg erfasst\nDatei in Liste als ✅ markiert
+    API-->>UI: Beleg gespeichert
 ```
+
+### Ziel des Moduls
+
+- Externe Eingangsrechnungen und Belege verwalten
+- PDFs innerhalb der Anwendung anzeigen
+- Beträge für steuerliche Auswertung erfassen
+- Jahresübersichten und Exporte bereitstellen
 
 ---
 
-*Version 1.0 · Stand: März 2025 · Baum Performance Stahl*
+*Version 2.0 · Stand: April 2026 · Baum Performance Stahl*
