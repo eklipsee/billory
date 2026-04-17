@@ -110,9 +110,9 @@ public class DocumentService {
         int position = 1;
 
         for (CreateLineItemRequest itemRequest : request.getLineItems()) {
-            double grossAmount = itemRequest.getGrossAmount();
-            double netAmount = roundToTwoDecimals(grossAmount / 1.19);
-            double taxAmount = roundToTwoDecimals(grossAmount - netAmount);
+            double netAmount = itemRequest.getNetAmount();
+            double taxAmount = roundToTwoDecimals(netAmount * 0.19);
+            double grossAmount = roundToTwoDecimals(netAmount + taxAmount);
 
             LineItem lineItem = new LineItem();
             lineItem.setDocument(savedDocument);
@@ -134,9 +134,13 @@ public class DocumentService {
             position++;
         }
 
-        savedDocument.setGrossTotal(roundToTwoDecimals(grossTotal));
-        savedDocument.setNetTotal(roundToTwoDecimals(netTotal));
-        savedDocument.setTaxTotal(roundToTwoDecimals(taxTotal));
+        double roundedNetTotal = roundToTwoDecimals(netTotal);
+        double roundedTaxTotal = roundToTwoDecimals(roundedNetTotal * 0.19);
+        double roundedGrossTotal = roundToTwoDecimals(roundedNetTotal + roundedTaxTotal);
+
+        savedDocument.setNetTotal(roundedNetTotal);
+        savedDocument.setTaxTotal(roundedTaxTotal);
+        savedDocument.setGrossTotal(roundedGrossTotal);
 
         Document updatedDocument = documentRepository.save(savedDocument);
 

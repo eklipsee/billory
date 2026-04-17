@@ -11,7 +11,7 @@ public class CreateLineItemRequest {
 
     @NotNull
     @DecimalMin("0.01")
-    private Double grossAmount;
+    private Double netAmount;
 
     public CreateLineItemRequest() {
     }
@@ -20,15 +20,15 @@ public class CreateLineItemRequest {
         return description;
     }
 
-    public Double getGrossAmount() {
-        return grossAmount;
+    public Double getNetAmount() {
+        return netAmount;
     }
 
     public void setDescription(String description) {
         this.description = description;
     }
 
-    public void setGrossAmount(Double grossAmount) {
-        this.grossAmount = grossAmount;
+    public void setNetAmount(Double netAmount) {
+        this.netAmount = netAmount;
     }
 }
