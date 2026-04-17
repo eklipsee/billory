@@ -154,6 +154,7 @@ Speichert sowohl Angebote als auch Rechnungen. Der Typ wird über die Spalte `ty
 | `id` | `INTEGER` | ✅ | Primärschlüssel, auto-increment |
 | `type` | `TEXT` | ✅ | `'offer'` = Angebot, `'invoice'` = Rechnung |
 | `status` | `TEXT` | ✅ | `'draft'` / `'open'` / `'paid'` / `'cancelled'` |
+| `is_historical` | `INTEGER` | ✅ | 0 = normales Dokument, 1 = historisch importiertes Dokument |
 | `invoice_number` | `TEXT` | ❌ | Rechnungsnummer (nur bei Typ `invoice`, Format FNMMYY) |
 | `customer_id` | `INTEGER` | ✅ | Fremdschlüssel → `customers.id` |
 | `document_date` | `TEXT` | ✅ | Rechnungs-/Angebotsdatum (ISO-8601) |
@@ -212,6 +213,8 @@ draft ──→ open ──→ paid
 ### 2.4 `line_items`
 
 Speichert die einzelnen Positionen eines Dokuments. Jede Position gehört zu genau einem Dokument.
+Fachliche Eingabe: Der Benutzer gibt je Position einen Nettobetrag ein.  
+`tax_amount` und `gross_amount` werden auf Anwendungsebene automatisch berechnet und gespeichert.
 
 | Spalte | Typ | Pflicht | Beschreibung |
 |---|---|---|---|
@@ -305,19 +308,19 @@ PRAGMA foreign_keys = ON;
 
 Alle Betragsberechnungen erfolgen auf **Anwendungsebene** vor dem Speichern. In der Datenbank werden ausschließlich bereits berechnete Werte gespeichert.
 
-### Berechnung aus Bruttobetrag (Eingabe)
+### Berechnung aus Nettobetrag (Eingabe)
 
 ```
-net_amount  = ROUND(gross_amount / 1.19, 2)
-tax_amount  = ROUND(gross_amount - net_amount, 2)
+tax_amount   = ROUND(net_amount * 0.19, 2)
+gross_amount = ROUND(net_amount + tax_amount, 2)
 ```
 
 ### Dokumentsummen (aus Positionen)
 
 ```
-gross_total = SUM(line_items.gross_amount)
 net_total   = SUM(line_items.net_amount)
-tax_total   = SUM(line_items.tax_amount)
+tax_total   = ROUND(net_total * 0.19, 2)
+gross_total = ROUND(net_total + tax_total, 2)
 ```
 
 ### Rechnungsnummer (Format FNMMYY)
