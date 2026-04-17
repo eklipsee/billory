@@ -165,6 +165,31 @@ Beim Start der Anwendung wird ein Passwort abgefragt. Ohne korrektes Passwort is
 - Speicherung als PDF im Archivordner
 - Datenschutzhinweis wird automatisch ins PDF eingefügt
 
+### Historische Rechnungen
+
+Zusätzlich zur normalen Rechnungserstellung können historische Rechnungen manuell in das System übernommen werden.
+
+Eigenschaften historischer Rechnungen:
+
+- vorhandene Rechnungsnummer wird manuell übernommen
+- Rechnungsdatum und Leistungsdatum werden manuell gesetzt
+- Status kann direkt als `OPEN` oder `PAID` gesetzt werden
+- automatische Rechnungsnummernvergabe erfolgt nicht
+- optional kann ein vorhandenes Original-PDF mit dem Dokument verknüpft werden
+
+Historische Rechnungen dienen der nachträglichen Übernahme bereits existierender Ausgangsrechnungen in Papierform oder als PDF.
+
+### Verknüpfung vorhandener PDFs
+
+Für historische Rechnungen kann ein bereits vorhandenes Original-PDF mit dem Dokument verknüpft werden.
+
+Dabei gilt:
+
+- die Quelldatei muss eine PDF-Datei sein
+- die Datei wird in das definierte Archiv kopiert
+- der neue Archivpfad wird im Dokument gespeichert
+- die Verknüpfung ist nur für historische Dokumente zulässig
+
 #### Rechnungsnummerierung
 
 Format: `F[lfd.Nr.][MM][JJ]` – Beispiel: `F020325`
@@ -257,6 +282,20 @@ Der Auftraggeber fotografiert Belege (z. B. Tankquittungen, Materialrechnungen) 
 - Alle Felder wie Rechnung (ohne Rechnungsnummer und Steuerangaben)
 - Gültigkeitsdatum des Angebots
 - Hinweis auf Widerrufsrecht (gem. § 355 BGB)
+
+
+### Archivstruktur
+
+Erzeugte und verknüpfte PDF-Dokumente werden strukturiert im Archivordner gespeichert.
+
+Ablagestruktur:
+
+- `<archivePath>/Rechnungen/<Jahr>/`
+- `<archivePath>/Angebote/<Jahr>/`
+
+Externe Belege werden separat gespeichert unter:
+
+- `<receiptsPath>/<Jahr>/`
 
 ---
 
