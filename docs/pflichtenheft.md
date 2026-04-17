@@ -64,22 +64,28 @@ Folgende Funktionen sind ausdrücklich **nicht** Bestandteil des Projekts:
 | Bereich | Technologie | Begründung |
 |---|---|---|
 | Plattform | Windows 10 / 11 (64-Bit) | Vorgabe Auftraggeber |
-| Desktop-Framework | Electron.js | Ermöglicht native Desktop-App auf Basis von Web-Technologien; weit verbreitet, großes Ökosystem (VS Code, Slack, Discord nutzen denselben Stack) |
-| Frontend | React.js + TypeScript | Komponentenbasierte UI-Entwicklung; TypeScript reduziert Laufzeitfehler durch statische Typisierung |
-| Datenbank | SQLite | Dateibasierte lokale Datenbank, keine separate Installation nötig, für Einzelnutzer-Apps bewährt |
-| PDF-Erzeugung | PDFKit | Node.js-native Bibliothek, keine externe Abhängigkeit, präzise Layoutkontrolle |
-| Packaging | Electron Builder + NSIS | Erzeugt Windows-Installer (.exe) mit Startmenü-Eintrag |
+| Desktop-Framework | Electron.js | Stellt die Desktop-Hülle bereit |
+| Frontend | React.js + TypeScript | Komponentenbasierte UI |
+| Backend | Spring Boot (Java 21) | REST-API, Geschäftslogik, Validierung |
+| Build-Tool Backend | Maven | Standard-Build für Spring Boot |
+| Datenbank | SQLite | Lokale dateibasierte Speicherung |
+| ORM / Datenzugriff | Spring Data JPA + Hibernate | Entity-Mapping und Repository-Zugriff |
+| Migrationen | Flyway | Versionssichere Datenbankmigrationen |
+| PDF-Erzeugung | OpenPDF | PDF-Erzeugung im Java-Backend |
+| Packaging | Electron Builder + NSIS | Windows-Installer |
 
 ### 2.2 Systemkomponenten
 
 Die Anwendung ist in folgende Schichten aufgeteilt:
 
-- **UI-Layer** – React-Komponenten für alle Ansichten und Formulare
-- **Service-Layer** – Geschäftslogik (Nummerierung, Berechnungen, PDF-Generierung)
-- **Repository-Layer** – Datenbankzugriffe über SQLite
-- **PDF-Service** – Erzeugung von Angebots- und Rechnungs-PDFs
-- **Export-Service** – DATEV-CSV-Export
-- **Auth-Modul** – Passwortschutz beim Anwendungsstart
+- **UI-Layer** – React-Komponenten für Ansichten, Formulare und Tabellen
+- **Desktop-Layer** – Electron als lokale Desktop-Hülle
+- **Backend-Layer** – Spring Boot REST-API für Geschäftslogik und Validierung
+- **Service-Layer** – Java-Services für Nummerierung, Berechnungen, PDF-Generierung und Statuslogik
+- **Repository-Layer** – Spring Data JPA Repositories für SQLite-Zugriffe
+- **PDF-Service** – Erzeugung von Angebots- und Rechnungs-PDFs mit OpenPDF
+- **Export-Service** – DATEV-/CSV-Export
+- **Auth-Modul** – Passwortschutz beim Start der Anwendung
 
 ### 2.3 Datenhaltung
 
@@ -91,7 +97,7 @@ Alle Anwendungsdaten werden lokal in einer SQLite-Datenbank gespeichert.
 |---|---|
 | `customers` | Kundenstammdaten (Name, Adresse, E-Mail, Telefon, Notizen) |
 | `documents` | Angebote und Rechnungen (Typ, Status, Nummer, Datum, Gesamtbetrag) |
-| `line_items` | Positionen je Dokument (Beschreibung, Bruttobetrag) |
+| `line_items` | Positionen je Dokument (Beschreibung, Netto, MwSt., Brutto) |
 | `external_invoices` | Externe Belege (Pfad, Jahr, Datum, Beschreibung, Kategorie, Brutto, Netto, MwSt.) |
 | `settings` | Konfiguration (Passwort-Hash, Firmendaten, Archivpfad) |
 
@@ -141,8 +147,8 @@ Beim Start der Anwendung wird ein Passwort abgefragt. Ohne korrektes Passwort is
 ### 3.3 Angebotserstellung
 
 - Anlage eines Angebots mit Zuweisung zu einem Kunden
-- Beliebig viele Positionen (Freitext + Bruttobetrag)
-- Automatische Berechnung: Nettobetrag, 19 % MwSt., Gesamtbrutto
+- Beliebig viele Positionen (Freitext + Nettobetrag)
+- Automatische Berechnung: 19 % MwSt. und Gesamtbrutto
 - Angebotsdatum manuell eingebbar (Standard: heute)
 - Keine eigene Nummerierung für Angebote
 - Speicherung als PDF im Archivordner
@@ -153,8 +159,8 @@ Beim Start der Anwendung wird ein Passwort abgefragt. Ohne korrektes Passwort is
 
 - Anlage einer Rechnung (neu oder aus Angebot konvertiert)
 - Automatische Vergabe der Rechnungsnummer gemäß Format FNMMYY
-- Mehrere Positionen möglich; ausschließlich Festpreispositionen
-- Automatische Berechnung: Netto, 19 % MwSt., Brutto je Position und Gesamt
+- Beliebig viele Positionen (Freitext + Nettobetrag)
+- Automatische Berechnung: 19 % MwSt. und Gesamtbrutto
 - Rechnungsdatum manuell eingebbar (Standard: heute)
 - Speicherung als PDF im Archivordner
 - Datenschutzhinweis wird automatisch ins PDF eingefügt
@@ -229,6 +235,8 @@ Der Auftraggeber fotografiert Belege (z. B. Tankquittungen, Materialrechnungen) 
 
 - DIN A4, Hochformat
 - Firmenlogo oben links (wird vom Auftraggeber als PNG/SVG bereitgestellt)
+- Positionspreise werden im Rechnungslayout als Nettobeträge ausgewiesen
+- Summenblock enthält Nettobetrag, Umsatzsteuer und Gesamtbetrag
 - Absenderblock und Empfängeranschrift gemäß DIN 5008
 - Beträge rechtsbündig, Dezimalformat: `1.234,56 €`
 - Schriftart: Arial, 11 pt Fließtext
