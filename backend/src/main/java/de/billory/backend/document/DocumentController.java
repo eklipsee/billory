@@ -21,6 +21,12 @@ public class DocumentController {
         return documentService.createDocument(request);
     }
 
+    @PostMapping("/historical")
+    @ResponseStatus(HttpStatus.CREATED)
+    public DocumentResponse createHistoricalDocument(@Valid @RequestBody CreateHistoricalDocumentRequest request) {
+        return documentService.createHistoricalDocument(request);
+    }
+
     @GetMapping("/{id}")
     public DocumentResponse getDocumentById(@PathVariable Integer id) {
         return documentService.getDocumentById(id);

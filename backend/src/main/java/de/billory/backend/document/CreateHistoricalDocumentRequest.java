@@ -3,28 +3,29 @@ package de.billory.backend.document;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
-public class CreateDocumentRequest {
-
-    @NotNull
-    private DocumentType type;
+public class CreateHistoricalDocumentRequest {
 
     @NotNull
     private Integer customerId;
 
     @NotBlank
+    private String invoiceNumber;
+
+    @NotNull
+    private DocumentStatus status;
+
+    @NotBlank
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "documentDate must be in format YYYY-MM-DD")
     private String documentDate;
 
-    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "serviceDate must be in format YYYY-MM-DD")
+    @NotBlank
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "documentDate must be in format YYYY-MM-DD")
     private String serviceDate;
-
-    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "validUntil must be in format YYYY-MM-DD")
-    private String validUntil;
 
     private String notes;
 
@@ -32,15 +33,7 @@ public class CreateDocumentRequest {
     @NotEmpty
     private List<CreateLineItemRequest> lineItems;
 
-    public CreateDocumentRequest() {
-    }
-
-    public DocumentType getType() {
-        return type;
-    }
-
-    public void setType(DocumentType type) {
-        this.type = type;
+    public CreateHistoricalDocumentRequest() {
     }
 
     public Integer getCustomerId() {
@@ -49,6 +42,22 @@ public class CreateDocumentRequest {
 
     public void setCustomerId(Integer customerId) {
         this.customerId = customerId;
+    }
+
+    public String getInvoiceNumber() {
+        return invoiceNumber;
+    }
+
+    public void setInvoiceNumber(String invoiceNumber) {
+        this.invoiceNumber = invoiceNumber;
+    }
+
+    public DocumentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(DocumentStatus status) {
+        this.status = status;
     }
 
     public String getDocumentDate() {
@@ -65,14 +74,6 @@ public class CreateDocumentRequest {
 
     public void setServiceDate(String serviceDate) {
         this.serviceDate = serviceDate;
-    }
-
-    public String getValidUntil() {
-        return validUntil;
-    }
-
-    public void setValidUntil(String validUntil) {
-        this.validUntil = validUntil;
     }
 
     public String getNotes() {

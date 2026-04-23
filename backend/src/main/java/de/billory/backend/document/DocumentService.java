@@ -18,11 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class DocumentService {
@@ -47,47 +43,25 @@ public class DocumentService {
     public DocumentResponse createDocument(CreateDocumentRequest request) {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
-
-        if (request.getType() == DocumentType.INVOICE && request.getValidUntil() != null && !request.getValidUntil().isBlank()) {
-            throw new InvalidDocumentDataException("Invoices must not have validUntil");
-        }
         
         String now = LocalDateTime.now().toString();
 
+        if (request.getType() != DocumentType.OFFER && request.getType() != DocumentType.INVOICE) {
+            throw new InvalidDocumentDataException("Document type must be OFFER or INVOICE");
+        }
+
         Document document = new Document();
         document.setType(request.getType());
-        document.setIsHistorical(Boolean.TRUE.equals(request.getIsHistorical()) ? 1 : 0);
+        document.setIsHistorical(0);
 
         validateDocumentData(request.getType(), request.getValidUntil(), request.getServiceDate());
 
-        if (request.getType() == DocumentType.INVOICE
-                && Boolean.TRUE.equals(request.getIsHistorical())
-                && (request.getInvoiceNumber() == null || request.getInvoiceNumber().isBlank())) {
-            throw new InvalidDocumentDataException("Historical invoices must have invoiceNumber");
-        }
 
         if (request.getType() == DocumentType.INVOICE) {
-            if (Boolean.TRUE.equals(request.getIsHistorical())) {
-                document.setInvoiceNumber(request.getInvoiceNumber());
-            } else {
-                document.setInvoiceNumber(generateInvoiceNumber(request.getDocumentDate()));
-            }
+            document.setInvoiceNumber(generateInvoiceNumber(request.getDocumentDate()));
         }
 
-        if (Boolean.TRUE.equals(request.getIsHistorical())
-        && request.getStatus() == DocumentStatus.DRAFT) {
-            throw new InvalidDocumentDataException("Historical documents must not have DRAFT status");
-        }
-
-        if (!Boolean.TRUE.equals(request.getIsHistorical()) && request.getStatus() != null) {
-            throw new InvalidDocumentDataException("Status must not be provided for non-historical documents");
-        }
-
-        if (Boolean.TRUE.equals(request.getIsHistorical()) && request.getStatus() != null) {
-            document.setStatus(request.getStatus());
-        } else {
-            document.setStatus(DocumentStatus.DRAFT);
-        }
+        document.setStatus(DocumentStatus.DRAFT);
 
         document.setCustomer(customer);
         document.setDocumentDate(request.getDocumentDate());
@@ -103,15 +77,82 @@ public class DocumentService {
         Document savedDocument = documentRepository.save(document);
 
         List<LineItem> savedLineItems = new ArrayList<>();
-        double grossTotal = 0.0;
         double netTotal = 0.0;
-        double taxTotal = 0.0;
 
         int position = 1;
 
         for (CreateLineItemRequest itemRequest : request.getLineItems()) {
             double netAmount = itemRequest.getNetAmount();
-            double taxAmount = roundToTwoDecimals(netAmount * 0.19);
+            double taxAmount = roundToTwoDecimals(netAmount * (TAX_RATE / 100));
+            double grossAmount = roundToTwoDecimals(netAmount + taxAmount);
+
+            LineItem lineItem = new LineItem();
+            lineItem.setDocument(savedDocument);
+            lineItem.setPosition(position);
+            lineItem.setDescription(itemRequest.getDescription());
+            lineItem.setGrossAmount(grossAmount);
+            lineItem.setNetAmount(netAmount);
+            lineItem.setTaxAmount(taxAmount);
+            lineItem.setTaxRate(TAX_RATE);
+            lineItem.setCreatedAt(now);
+
+            LineItem savedLineItem = lineItemRepository.save(lineItem);
+            savedLineItems.add(savedLineItem);
+            
+            netTotal += netAmount;
+
+            position++;
+        }
+
+        double roundedNetTotal = roundToTwoDecimals(netTotal);
+        double roundedTaxTotal = roundToTwoDecimals(roundedNetTotal * (TAX_RATE / 100));
+        double roundedGrossTotal = roundToTwoDecimals(roundedNetTotal + roundedTaxTotal);
+
+        savedDocument.setNetTotal(roundedNetTotal);
+        savedDocument.setTaxTotal(roundedTaxTotal);
+        savedDocument.setGrossTotal(roundedGrossTotal);
+
+        Document updatedDocument = documentRepository.save(savedDocument);
+
+        return toResponse(updatedDocument, savedLineItems);
+    }
+
+    public DocumentResponse createHistoricalDocument(CreateHistoricalDocumentRequest request) {
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+        String now = LocalDateTime.now().toString();
+
+        if (request.getStatus() != DocumentStatus.OPEN && request.getStatus() != DocumentStatus.PAID) {
+            throw new InvalidDocumentDataException("Historical invoices must have status OPEN or PAID");
+        }
+
+        Document document = new Document();
+        document.setType(DocumentType.INVOICE);
+        document.setIsHistorical(1);
+        document.setInvoiceNumber(request.getInvoiceNumber());
+        document.setStatus(request.getStatus());
+        document.setCustomer(customer);
+        document.setDocumentDate(request.getDocumentDate());
+        document.setServiceDate(request.getServiceDate());
+        document.setValidUntil(null);
+        document.setNotes(request.getNotes());
+        document.setGrossTotal(0.0);
+        document.setNetTotal(0.0);
+        document.setTaxTotal(0.0);
+        document.setCreatedAt(now);
+        document.setUpdatedAt(now);
+
+        Document savedDocument = documentRepository.save(document);
+
+        List<LineItem> savedLineItems = new ArrayList<>();
+        double netTotal = 0.0;
+
+        int position = 1;
+
+        for (CreateLineItemRequest itemRequest : request.getLineItems()) {
+            double netAmount = itemRequest.getNetAmount();
+            double taxAmount = roundToTwoDecimals(netAmount * (TAX_RATE / 100));
             double grossAmount = roundToTwoDecimals(netAmount + taxAmount);
 
             LineItem lineItem = new LineItem();
@@ -127,15 +168,12 @@ public class DocumentService {
             LineItem savedLineItem = lineItemRepository.save(lineItem);
             savedLineItems.add(savedLineItem);
 
-            grossTotal += grossAmount;
             netTotal += netAmount;
-            taxTotal += taxAmount;
-
             position++;
         }
 
         double roundedNetTotal = roundToTwoDecimals(netTotal);
-        double roundedTaxTotal = roundToTwoDecimals(roundedNetTotal * 0.19);
+        double roundedTaxTotal = roundToTwoDecimals(roundedNetTotal * (TAX_RATE / 100));
         double roundedGrossTotal = roundToTwoDecimals(roundedNetTotal + roundedTaxTotal);
 
         savedDocument.setNetTotal(roundedNetTotal);
@@ -233,6 +271,38 @@ public class DocumentService {
     public DocumentResponse updateDocumentStatus(Integer id, UpdateDocumentStatusRequest request) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Document not found"));
+        
+        DocumentType type = document.getType();
+        DocumentStatus currentStatus = document.getStatus();
+        DocumentStatus newStatus = request.getStatus();
+        boolean isHistorical = document.getIsHistorical() != null && document.getIsHistorical() == 1;
+
+        // --- Type-based rules ---
+
+        if (type == DocumentType.OFFER && newStatus == DocumentStatus.PAID) {
+            throw new InvalidDocumentDataException("Offers must not have PAID status");
+        }
+
+        // --- Historical rules ---
+
+        if (isHistorical && newStatus == DocumentStatus.DRAFT) {
+            throw new InvalidDocumentDataException("Historical documents must not have DRAFT status");
+        }
+
+        // --- Back-to-DRAFT rules ---
+
+        if (type == DocumentType.OFFER
+                && currentStatus != DocumentStatus.DRAFT
+                && newStatus == DocumentStatus.DRAFT) {
+            throw new InvalidDocumentDataException("Offers must not be moved back to DRAFT");
+        }
+
+        if (type == DocumentType.INVOICE
+                && !isHistorical
+                && currentStatus != DocumentStatus.DRAFT
+                && newStatus == DocumentStatus.DRAFT) {
+            throw new InvalidDocumentDataException("Invoices must not be moved back to DRAFT");
+        }
 
         validateStatusTransition(document.getStatus(), request.getStatus());
 
@@ -245,6 +315,9 @@ public class DocumentService {
         return toResponse(updatedDocument, lineItems);
     }
 
+    // General status transition rules.
+    // Additional business rules by document type or historical flag
+    // are enforced in updateDocumentStatus(...) before this method is called.
     private void validateStatusTransition(DocumentStatus currentStatus, DocumentStatus newStatus) {
         if (currentStatus == newStatus) {
             return;
@@ -406,7 +479,7 @@ public class DocumentService {
             return toResponse(savedDocument, lineItems);
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to attach PDF", e);
+            throw new InvalidDocumentDataException("Failed to attach PDF file");
         }
     }
 

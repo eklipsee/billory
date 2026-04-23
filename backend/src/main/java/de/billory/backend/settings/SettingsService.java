@@ -4,17 +4,19 @@ import de.billory.backend.common.NotFoundException;
 
 import java.time.LocalDateTime;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SettingsService {
 
     private static final Integer SETTINGS_ID = 1;
-
+    private final PasswordEncoder passwordEncoder;
     private final SettingsRepository settingsRepository;
 
-    public SettingsService(SettingsRepository settingsRepository) {
+    public SettingsService(SettingsRepository settingsRepository, PasswordEncoder passwordEncoder) {
         this.settingsRepository = settingsRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public SettingsResponse getSettings() {
@@ -43,7 +45,7 @@ public class SettingsService {
         settings.setTaxNumber(request.getTaxNumber());
         settings.setIban(request.getIban());
         settings.setBankName(request.getBankName());
-        settings.setPasswordHash(request.getPasswordHash());
+        settings.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         settings.setLogoPath(request.getLogoPath());
         settings.setArchivePath(request.getArchivePath());
         settings.setBackupPath(request.getBackupPath());
@@ -71,7 +73,6 @@ public class SettingsService {
         settings.setTaxNumber(request.getTaxNumber());
         settings.setIban(request.getIban());
         settings.setBankName(request.getBankName());
-        settings.setPasswordHash(request.getPasswordHash());
         settings.setLogoPath(request.getLogoPath());
         settings.setArchivePath(request.getArchivePath());
         settings.setBackupPath(request.getBackupPath());
