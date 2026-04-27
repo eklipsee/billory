@@ -9,9 +9,8 @@ import de.billory.backend.settings.SettingsRepository;
 import org.springframework.stereotype.Service;
 import de.billory.backend.common.InvalidStatusTransitionException;
 
-import de.billory.backend.common.InvalidDocumentConversionException;
+import de.billory.backend.common.InvalidDocumentConversionException;                                          
 import de.billory.backend.common.InvalidDocumentDataException;
-import java.util.stream.Collectors;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -26,7 +25,7 @@ public class DocumentService {
     private static final double TAX_RATE = 19.0;
 
     private final SettingsRepository settingsRepository;
-    private final DocumentRepository documentRepository;
+    private final DocumentRepository documentRepository;                                        
     private final LineItemRepository lineItemRepository;
     private final CustomerRepository customerRepository;
 
