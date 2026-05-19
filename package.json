@@ -5,8 +5,9 @@
   "main": "src/main/index.js",
   "scripts": {
     "dev:renderer": "vite",
+    "dev:electron": "wait-on tcp:5173 && electron .",
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:electron\"",
     "build:renderer": "vite build",
-    "dev": "electron .",
     "build": "electron-builder"
   },
   "repository": {
@@ -19,13 +20,14 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
     "electron": "^41.2.0",
     "electron-builder": "^26.8.1",
     "typescript": "^6.0.2",
-    "vite": "^6.4.2"
+    "vite": "^6.4.2",
+    "wait-on": "^9.0.10"
   },
   "dependencies": {
-    "better-sqlite3": "^12.8.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   }

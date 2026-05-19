@@ -64,4 +64,9 @@ public class PdfController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
     }
+
+    @GetMapping("/reminder/{invoiceId}")
+    public String createReminderPdf(@PathVariable Integer invoiceId) {
+        return pdfService.createReminderPdf(invoiceId);
+    }
 }

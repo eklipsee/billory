@@ -22,6 +22,7 @@ import de.billory.backend.document.DocumentRepository;
 import de.billory.backend.document.DocumentService;
 import de.billory.backend.document.DocumentType;
 import de.billory.backend.document.LineItem;
+import de.billory.backend.document.DocumentStatus;
 import de.billory.backend.document.LineItemRepository;
 import de.billory.backend.settings.Settings;
 import de.billory.backend.settings.SettingsRepository;
@@ -130,6 +131,77 @@ public class PdfService {
 
         } catch (IOException | DocumentException e) {
             throw new RuntimeException("Failed to create document PDF", e);
+        }
+    }
+
+    public String createReminderPdf(Integer invoiceId) {
+        Document invoice = documentRepository.findById(invoiceId)
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        if (invoice.getType() != DocumentType.INVOICE) {
+            throw new IllegalArgumentException("Reminder can only be created for invoices");
+        }
+
+        if (invoice.getStatus() != DocumentStatus.OPEN) {
+            throw new IllegalArgumentException("Reminder can only be created for open invoices");
+        }
+
+        Settings settings = settingsRepository.findById(SETTINGS_ID)
+                .orElseThrow(() -> new NotFoundException("Settings not found"));
+
+        try {
+
+            Path outputDir = Path.of(settings.getArchivePath(), "Mahnungen");
+            Files.createDirectories(outputDir);
+
+            String fileName = "Mahnung_" + invoice.getInvoiceNumber() + ".pdf";
+            Path pdfPath = outputDir.resolve(fileName);
+
+            com.lowagie.text.Document pdfDocument =
+                    new com.lowagie.text.Document(PageSize.A4, 50, 50, 70, 70);
+
+            PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfPath.toFile()));
+
+            pdfDocument.open();
+
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+
+            Paragraph title = new Paragraph("Mahnung", titleFont);
+            title.setSpacingAfter(20f);
+
+            pdfDocument.add(title);
+            
+            pdfDocument.add(new Paragraph(invoice.getCustomer().getName(), normalFont));
+            pdfDocument.add(new Paragraph(invoice.getCustomer().getStreet(), normalFont));
+            pdfDocument.add(new Paragraph(
+                    invoice.getCustomer().getZip() + " " + invoice.getCustomer().getCity(),
+                    normalFont
+            ));
+
+            pdfDocument.add(new Paragraph(" "));
+
+            pdfDocument.add(new Paragraph("Rechnungsnummer: " + invoice.getInvoiceNumber(), normalFont));
+            pdfDocument.add(new Paragraph("Rechnungsdatum: " + invoice.getDocumentDate(), normalFont));
+            pdfDocument.add(new Paragraph("Offener Betrag: "
+                    + String.format(java.util.Locale.US, "%.2f €", invoice.getGrossTotal()), normalFont));
+
+            pdfDocument.add(new Paragraph(" "));
+
+            String reminderText = settings.getReminderTemplate();
+
+            if (reminderText == null || reminderText.isBlank()) {
+                reminderText = "Bitte begleichen Sie den offenen Betrag.";
+            }
+
+            pdfDocument.add(new Paragraph(reminderText, normalFont));
+
+            pdfDocument.close();
+
+            return pdfPath.toAbsolutePath().toString();
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to create reminder PDF");
         }
     }
 
