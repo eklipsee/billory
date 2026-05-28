@@ -82,3 +82,15 @@ export type DocumentCreateRequest = {
   notes?: string
   lineItems: LineItemCreateRequest[]
 }
+
+export type PdfPathResponse = {
+  filePath: string
+}
+
+export type UpdateDocumentStatusRequest = {
+  status: DocumentStatus
+}
+
+export type ConvertToInvoiceRequest = {
+  offerId: number
+}

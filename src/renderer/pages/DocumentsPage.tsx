@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 
 import { documentApi } from '../api/documentApi'
 
+import { pdfApi } from '../api/pdfApi'
+
 import type {
   DocumentStatus,
   DocumentSummary,
@@ -141,9 +143,100 @@ export default function DocumentsPage() {
                 <td>{document.documentDate}</td>
                 <td>{formatCurrency(document.grossTotal)}</td>
                 <td>
-                  <button type="button">
-                    Details
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const filePath =
+                          await pdfApi.generateDocument(document.id)
+
+                        alert(`PDF erzeugt:\n${filePath.filePath}`)
+
+                        await loadDocuments()
+                      } catch (error) {
+                        setError(
+                          error instanceof Error
+                            ? error.message
+                            : 'PDF konnte nicht erzeugt werden.'
+                        )
+                      }
+                    }}
+                  >
+                    PDF erzeugen
                   </button>
+
+                  {document.type === 'INVOICE' && document.status === 'OPEN' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const filePath =
+                          await pdfApi.generateReminder(document.id)
+
+                        alert(`Mahnung erzeugt:\n${filePath.filePath}`)
+                      } catch (error) {
+                        setError(
+                          error instanceof Error
+                            ? error.message
+                            : 'Mahnung konnte nicht erzeugt werden.'
+                        )
+                      }
+                    }}
+                    >
+                      Mahnung erzeugen
+                    </button>
+                  )}
+
+                  {document.type === 'INVOICE' && document.status === 'OPEN' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await documentApi.updateStatus(document.id, {
+                            status: 'PAID',
+                          })
+
+                          await loadDocuments()
+                        } catch (error) {
+                          setError(
+                            error instanceof Error
+                              ? error.message
+                              : 'Status konnte nicht geändert werden.'
+                          )
+                        }
+                      }}
+                    >
+                      Als bezahlt markieren
+                    </button>
+                  )}
+
+                  {document.type === 'OFFER' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const createdInvoice =
+                            await documentApi.convertToInvoice({
+                              offerId: document.id,
+                            })
+
+                          alert(
+                            `Rechnung erstellt: ${createdInvoice.invoiceNumber || createdInvoice.id}`
+                          )
+
+                          await loadDocuments()
+                        } catch (error) {
+                          setError(
+                            error instanceof Error
+                              ? error.message
+                              : 'Angebot konnte nicht konvertiert werden.'
+                          )
+                        }
+                      }}
+                    >
+                      Zu Rechnung konvertieren
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

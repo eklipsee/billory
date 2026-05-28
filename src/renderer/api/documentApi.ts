@@ -1,9 +1,11 @@
 import { apiClient } from './apiClient'
 import type {
+  ConvertToInvoiceRequest,
   DocumentCreateRequest,
   DocumentStatus,
   DocumentSummary,
   DocumentType,
+  UpdateDocumentStatusRequest,
 } from '../types/api'
 
 type GetDocumentsFilters = {
@@ -32,5 +34,19 @@ export const documentApi = {
 
   create(data: DocumentCreateRequest) {
     return apiClient.post<DocumentSummary>('/documents', data)
+  },
+
+  updateStatus(id: number, data: UpdateDocumentStatusRequest) {
+    return apiClient.put<DocumentSummary>(
+      `/documents/${id}/status`,
+      data
+    )
+  },
+
+  convertToInvoice(data: ConvertToInvoiceRequest) {
+    return apiClient.put<DocumentSummary>(
+      '/documents/convert-to-invoice',
+      data
+    )
   },
 }

@@ -344,11 +344,18 @@ public class DocumentService {
             throw new InvalidDocumentConversionException("Only offers can be converted to invoices");
         }
 
-        validateDocumentData(DocumentType.INVOICE, null, offer.getServiceDate());
+        String serviceDate = offer.getServiceDate();
+        String now = LocalDateTime.now().toString();
+
+        if (serviceDate == null || serviceDate.isBlank()) {
+            serviceDate = now.substring(0, 10);
+        }
+
+        validateDocumentData(DocumentType.INVOICE, null, serviceDate);
 
         List<LineItem> originalLineItems = lineItemRepository.findByDocumentIdOrderByPositionAsc(offer.getId());
 
-        String now = LocalDateTime.now().toString();
+       
 
         Document invoice = new Document();
         invoice.setType(DocumentType.INVOICE);
@@ -361,7 +368,7 @@ public class DocumentService {
         invoice.setStatus(DocumentStatus.DRAFT);
         invoice.setCustomer(offer.getCustomer());
         invoice.setDocumentDate(invoiceDate);
-        invoice.setServiceDate(offer.getServiceDate());
+        invoice.setServiceDate(serviceDate); 
         invoice.setValidUntil(null);
         invoice.setNotes(offer.getNotes());
         invoice.setGrossTotal(offer.getGrossTotal());
