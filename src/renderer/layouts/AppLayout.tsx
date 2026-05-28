@@ -11,6 +11,7 @@ const navigationItems: { page: AppPage; label: string }[] = [
   { page: 'dashboard', label: 'Dashboard' },
   { page: 'customers', label: 'Kunden' },
   { page: 'documents', label: 'Dokumente' },
+  { page: 'createDocument', label: 'Dokument erstellen' },
   { page: 'externalInvoices', label: 'Belege' },
   { page: 'export', label: 'Export' },
   { page: 'settings', label: 'Einstellungen' },

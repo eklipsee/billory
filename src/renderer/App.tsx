@@ -9,6 +9,7 @@ import DocumentsPage from './pages/DocumentsPage'
 import ExternalInvoicesPage from './pages/ExternalInvoicesPage'
 import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
+import CreateDocumentPage from './pages/CreateDocumentPage'
 
 import type { AppPage } from './types/navigation'
 
@@ -46,6 +47,9 @@ export default function App() {
 
       case 'documents':
         return <DocumentsPage />
+
+      case 'createDocument':
+        return <CreateDocumentPage />
 
       case 'externalInvoices':
         return <ExternalInvoicesPage />

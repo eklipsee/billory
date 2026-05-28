@@ -1,5 +1,6 @@
 import { apiClient } from './apiClient'
 import type {
+  DocumentCreateRequest,
   DocumentStatus,
   DocumentSummary,
   DocumentType,
@@ -27,5 +28,9 @@ export const documentApi = {
       : ''
 
     return apiClient.get<DocumentSummary[]>(`/documents${query}`)
+  },
+
+  create(data: DocumentCreateRequest) {
+    return apiClient.post<DocumentSummary>('/documents', data)
   },
 }

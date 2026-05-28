@@ -67,3 +67,18 @@ export type DocumentSummary = {
   createdAt?: string
   updatedAt?: string
 }
+
+export type LineItemCreateRequest = {
+  description: string
+  netAmount: number
+}
+
+export type DocumentCreateRequest = {
+  type: DocumentType
+  customerId: number
+  documentDate: string
+  serviceDate?: string
+  validUntil?: string
+  notes?: string
+  lineItems: LineItemCreateRequest[]
+}
