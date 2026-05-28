@@ -108,3 +108,40 @@ export type HistoricalDocumentCreateRequest = {
 export type AttachPdfRequest = {
   sourceFilePath: string
 }
+
+export type ExternalInvoice = {
+  id: number
+  filePath: string
+  year: number
+  date: string
+  description: string
+  category?: string | null
+  grossAmount: number
+  netAmount: number
+  taxAmount: number
+  taxRate: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type ExternalInvoiceCreateRequest = {
+  sourceFilePath: string
+  year: number
+  date: string
+  description: string
+  category?: string
+  grossAmount: number
+}
+
+export type ExternalInvoiceUpdateRequest = {
+  date: string
+  description: string
+  category?: string
+  grossAmount: number
+}
+
+export type ExternalInvoiceSummary = {
+  totalGross: number
+  totalNet: number
+  totalTax: number
+}
