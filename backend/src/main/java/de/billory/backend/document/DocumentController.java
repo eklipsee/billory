@@ -55,4 +55,10 @@ public class DocumentController {
                                     @Valid @RequestBody AttachPdfRequest request) {
         return documentService.attachPdf(id, request);
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteDocument(@PathVariable Integer id) {
+        documentService.deleteDocument(id);
+    }
 }

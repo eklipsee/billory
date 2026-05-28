@@ -512,4 +512,16 @@ public class DocumentService {
 
         return "Angebot_" + document.getId() + ".pdf";
     }
+
+    public void deleteDocument(Integer id) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Document not found"));
+
+        List<LineItem> lineItems =
+                lineItemRepository.findByDocumentIdOrderByPositionAsc(id);
+
+        lineItemRepository.deleteAll(lineItems);
+
+        documentRepository.delete(document);
+    }
 }

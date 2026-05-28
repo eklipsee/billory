@@ -13,4 +13,6 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findByTypeAndStatus(DocumentType type, DocumentStatus status);
 
     long countByTypeAndDocumentDateStartingWith(DocumentType type, String yearMonth);
+
+    boolean existsByCustomerId(Integer customerId);
 }

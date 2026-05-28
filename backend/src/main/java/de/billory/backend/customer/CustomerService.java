@@ -4,15 +4,22 @@ import org.springframework.stereotype.Service;
 import de.billory.backend.common.NotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
+import de.billory.backend.document.DocumentRepository;
 
 @Service
 public class CustomerService {
 
-    private final CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;    
 
-    public CustomerService(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
-    }
+    private final DocumentRepository documentRepository;
+
+    public CustomerService(
+        CustomerRepository customerRepository,
+        DocumentRepository documentRepository
+        ) {
+            this.customerRepository = customerRepository;
+            this.documentRepository = documentRepository;
+        }
 
     public List<CustomerResponse> getAllCustomers(String search) {
         List<Customer> customers;
@@ -54,11 +61,20 @@ public class CustomerService {
     }
 
     public void deleteCustomer(Integer id) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+            Customer customer = customerRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+            boolean hasDocuments =
+                    documentRepository.existsByCustomerId(id);
+
+            if (hasDocuments) {
+                throw new IllegalStateException(
+                        "Customer cannot be deleted because documents exist"
+                );
+        }
 
         customerRepository.delete(customer);
-    }
+    }   
 
     public CustomerResponse updateCustomer(Integer id, UpdateCustomerRequest request) {
         Customer customer = customerRepository.findById(id)

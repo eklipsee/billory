@@ -37,3 +37,33 @@ export type CustomerCreateRequest = {
 }
 
 export type CustomerUpdateRequest = CustomerCreateRequest
+
+export type DocumentType = 'OFFER' | 'INVOICE'
+
+export type DocumentStatus =
+  | 'DRAFT'
+  | 'OPEN'
+  | 'PAID'
+  | 'CANCELLED'
+
+
+
+export type DocumentSummary = {
+  id: number
+  type: DocumentType
+  status: DocumentStatus
+  isHistorical?: boolean
+  invoiceNumber?: string | null
+  customerId: number
+  customerName: string
+  documentDate: string
+  serviceDate?: string | null
+  validUntil?: string | null
+  grossTotal: number
+  netTotal: number
+  taxTotal: number
+  pdfPath?: string | null
+  notes?: string | null
+  createdAt?: string
+  updatedAt?: string
+}

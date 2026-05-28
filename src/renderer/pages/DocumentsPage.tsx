@@ -1,9 +1,155 @@
-export default function DashboardPage() {
+import { useEffect, useState } from 'react'
+
+import { documentApi } from '../api/documentApi'
+
+import type {
+  DocumentStatus,
+  DocumentSummary,
+  DocumentType,
+} from '../types/api'
+
+function formatDocumentType(type: string) {
+  return type === 'INVOICE' ? 'Rechnung' : 'Angebot'
+}
+
+function formatDocumentStatus(status: string) {
+  switch (status) {
+    case 'DRAFT':
+      return 'Entwurf'
+    case 'OPEN':
+      return 'Offen'
+    case 'PAID':
+      return 'Bezahlt'
+    case 'CANCELLED':
+      return 'Storniert'
+    default:
+      return status
+  }
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(value)
+}
+
+export default function DocumentsPage() {
+  const [documents, setDocuments] = useState<DocumentSummary[]>([])
+  const [typeFilter, setTypeFilter] = useState<DocumentType | ''>('')
+  const [statusFilter, setStatusFilter] = useState<DocumentStatus | ''>('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function loadDocuments() {
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const data = await documentApi.getAll({
+        type: typeFilter,
+        status: statusFilter,
+      })
+
+      setDocuments(data)
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Dokumente konnten nicht geladen werden.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDocuments()
+  }, [typeFilter, statusFilter])
+
   return (
     <main>
-      <h1>Billory Dashboard</h1>
+      <h2>Dokumente</h2>
 
-      <p>Frontend erfolgreich verbunden.</p>
+      <div>
+        <select
+          value={typeFilter}
+          onChange={(event) =>
+            setTypeFilter(event.target.value as DocumentType | '')
+          }
+        >
+          <option value="">Alle Typen</option>
+          <option value="INVOICE">Rechnungen</option>
+          <option value="OFFER">Angebote</option>
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(event) =>
+            setStatusFilter(event.target.value as DocumentStatus | '')
+          }
+        >
+          <option value="">Alle Status</option>
+          <option value="DRAFT">Entwurf</option>
+          <option value="OPEN">Offen</option>
+          <option value="PAID">Bezahlt</option>
+          <option value="CANCELLED">Storniert</option>
+        </select>
+
+        <button type="button" onClick={loadDocuments}>
+          Aktualisieren
+        </button>
+      </div>
+
+      {isLoading && <p>Lade Dokumente...</p>}
+      {error && <p>{error}</p>}
+
+      <p>
+        {documents.length} Dokument(e) gefunden
+      </p>
+
+      {!isLoading && (
+        <table>
+          <thead>
+            <tr>
+              <th>Typ</th>
+              <th>Status</th>
+              <th>Nummer</th>
+              <th>Kunde</th>
+              <th>Datum</th>
+              <th>Brutto</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {documents.length === 0 && (
+              <tr>
+                <td colSpan={7}>
+                  Keine Dokumente gefunden.
+                </td>
+              </tr>
+            )}
+            
+            {documents.map((document) => (
+              <tr key={document.id}>
+                <td>{formatDocumentType(document.type)}</td>
+                <td>{formatDocumentStatus(document.status)}</td>
+                <td>{document.invoiceNumber || '-'}</td>
+                <td>{document.customerName}</td>
+                <td>{document.documentDate}</td>
+                <td>{formatCurrency(document.grossTotal)}</td>
+                <td>
+                  <button type="button">
+                    Details
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </main>
   )
 }
