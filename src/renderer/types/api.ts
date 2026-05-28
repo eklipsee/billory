@@ -94,3 +94,17 @@ export type UpdateDocumentStatusRequest = {
 export type ConvertToInvoiceRequest = {
   offerId: number
 }
+
+export type HistoricalDocumentCreateRequest = {
+  customerId: number
+  invoiceNumber: string
+  status: 'OPEN' | 'PAID'
+  documentDate: string
+  serviceDate: string
+  notes?: string
+  lineItems: LineItemCreateRequest[]
+}
+
+export type AttachPdfRequest = {
+  sourceFilePath: string
+}

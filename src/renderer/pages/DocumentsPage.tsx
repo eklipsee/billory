@@ -116,6 +116,7 @@ export default function DocumentsPage() {
             <tr>
               <th>Typ</th>
               <th>Status</th>
+              <th>Historisch</th>
               <th>Nummer</th>
               <th>Kunde</th>
               <th>Datum</th>
@@ -128,7 +129,7 @@ export default function DocumentsPage() {
 
             {documents.length === 0 && (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={8}>
                   Keine Dokumente gefunden.
                 </td>
               </tr>
@@ -138,6 +139,7 @@ export default function DocumentsPage() {
               <tr key={document.id}>
                 <td>{formatDocumentType(document.type)}</td>
                 <td>{formatDocumentStatus(document.status)}</td>
+                <td>{document.isHistorical ? 'Ja' : 'Nein'}</td>
                 <td>{document.invoiceNumber || '-'}</td>
                 <td>{document.customerName}</td>
                 <td>{document.documentDate}</td>
@@ -235,6 +237,32 @@ export default function DocumentsPage() {
                       }}
                     >
                       Zu Rechnung konvertieren
+                    </button>
+                  )}
+
+                  {document.isHistorical && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const sourceFilePath = 'C:/Users/Daniel/Desktop/test.pdf'
+
+                        try {
+                          await documentApi.attachPdf(document.id, {
+                            sourceFilePath,
+                          })
+
+                          alert('PDF wurde angehängt.')
+                          await loadDocuments()
+                        } catch (error) {
+                          setError(
+                            error instanceof Error
+                              ? error.message
+                              : 'PDF konnte nicht angehängt werden.'
+                          )
+                        }
+                      }}
+                    >
+                      PDF anhängen
                     </button>
                   )}
                 </td>

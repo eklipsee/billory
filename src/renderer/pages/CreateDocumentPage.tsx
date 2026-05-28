@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { customerApi } from '../api/customerApi'
 
-import type { Customer, DocumentType } from '../types/api'
+import type { Customer, DocumentStatus, DocumentType } from '../types/api'
 
 import { documentApi } from '../api/documentApi'
 
@@ -26,19 +26,23 @@ export default function CreateDocumentPage() {
 ])
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isHistorical, setIsHistorical] = useState(false)
+  const [invoiceNumber, setInvoiceNumber] = useState('')
+  const [historicalStatus, setHistoricalStatus] =
+    useState<DocumentStatus>('OPEN')
 
-  useEffect(() => {
-    async function loadCustomers() {
-      try {
-        const data = await customerApi.getAll()
-        setCustomers(data)
-      } catch {
-        setError('Kunden konnten nicht geladen werden.')
+    useEffect(() => {
+      async function loadCustomers() {
+        try {
+          const data = await customerApi.getAll()
+          setCustomers(data)
+        } catch {
+          setError('Kunden konnten nicht geladen werden.')
+        }
       }
-    }
 
-    loadCustomers()
-  }, [])
+      loadCustomers()
+    }, [])
 
 
   function updateLineItem(
@@ -76,19 +80,33 @@ export default function CreateDocumentPage() {
         setIsSaving(true)
 
         try {
-            await documentApi.create({
-            type,
-            customerId: Number(customerId),
-            documentDate,
-            serviceDate: type === 'INVOICE' ? serviceDate : undefined,
-            validUntil: type === 'OFFER' ? validUntil : undefined,
-            notes,
-            lineItems: lineItems.map((item) => ({
+            if (isHistorical) {
+            await documentApi.createHistorical({
+                customerId: Number(customerId),
+                invoiceNumber,
+                status: historicalStatus === 'PAID' ? 'PAID' : 'OPEN',
+                documentDate,
+                serviceDate,
+                notes,
+                lineItems: lineItems.map((item) => ({
                 description: item.description,
                 netAmount: Number(item.netAmount),
-            })),
+                })),
             })
-
+            } else {
+            await documentApi.create({
+                type,
+                customerId: Number(customerId),
+                documentDate,
+                serviceDate: type === 'INVOICE' ? serviceDate : undefined,
+                validUntil: type === 'OFFER' ? validUntil : undefined,
+                notes,
+                lineItems: lineItems.map((item) => ({
+                description: item.description,
+                netAmount: Number(item.netAmount),
+                })),
+            })
+            }
             setCustomerId('')
             setDocumentDate(getTodayDate())
             setServiceDate(getTodayDate())
@@ -100,6 +118,9 @@ export default function CreateDocumentPage() {
                 netAmount: '',
             },
             ])
+            setIsHistorical(false)
+            setInvoiceNumber('')
+            setHistoricalStatus('OPEN')
 
             alert('Dokument wurde erstellt.')
         } catch (error) {
@@ -120,15 +141,54 @@ export default function CreateDocumentPage() {
       {error && <p>{error}</p>}
 
       <form onSubmit={handleSubmit}>
+        <label>
+            <input
+                type="checkbox"
+                checked={isHistorical}
+                onChange={(event) => {
+                setIsHistorical(event.target.checked)
+
+                if (event.target.checked) {
+                    setType('INVOICE')
+                }
+                }}
+            />
+            Historische Rechnung
+        </label>
         <select
-          value={type}
-          onChange={(event) =>
-            setType(event.target.value as DocumentType)
-          }
+            value={type}
+            disabled={isHistorical}
+            onChange={(event) =>
+                setType(event.target.value as DocumentType)
+            }
         >
           <option value="INVOICE">Rechnung</option>
           <option value="OFFER">Angebot</option>
         </select>
+        {isHistorical && (
+        <>
+            <input
+            type="text"
+            placeholder="Rechnungsnummer"
+            value={invoiceNumber}
+            onChange={(event) =>
+                setInvoiceNumber(event.target.value)
+            }
+            />
+
+            <select
+            value={historicalStatus}
+            onChange={(event) =>
+                setHistoricalStatus(
+                event.target.value as DocumentStatus
+                )
+            }
+            >
+            <option value="OPEN">Offen</option>
+            <option value="PAID">Bezahlt</option>
+            </select>
+        </>
+        )}
 
         <select
           value={customerId}

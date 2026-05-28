@@ -6,6 +6,8 @@ import type {
   DocumentSummary,
   DocumentType,
   UpdateDocumentStatusRequest,
+  AttachPdfRequest,
+  HistoricalDocumentCreateRequest,
 } from '../types/api'
 
 type GetDocumentsFilters = {
@@ -46,6 +48,25 @@ export const documentApi = {
   convertToInvoice(data: ConvertToInvoiceRequest) {
     return apiClient.put<DocumentSummary>(
       '/documents/convert-to-invoice',
+      data
+    )
+  },
+
+  createHistorical(
+    data: HistoricalDocumentCreateRequest
+  ) {
+    return apiClient.post<DocumentSummary>(
+      '/documents/historical',
+      data
+    )
+  },
+
+  attachPdf(
+    id: number,
+    data: AttachPdfRequest
+  ) {
+    return apiClient.post<DocumentSummary>(
+      `/documents/${id}/attach-pdf`,
       data
     )
   },
