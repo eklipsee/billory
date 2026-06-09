@@ -4,6 +4,7 @@ import type {
   ChangePasswordRequest,
   Settings,
   SettingsUpdateRequest,
+  SettingsCreateRequest,
 } from '../types/api'
 
 export const settingsApi = {
@@ -20,5 +21,9 @@ export const settingsApi = {
       '/auth/change-password',
       data
     )
+  },
+
+  create(data: SettingsCreateRequest) {
+    return apiClient.post<Settings>('/settings', data)
   },
 }

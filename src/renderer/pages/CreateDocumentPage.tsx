@@ -134,6 +134,12 @@ export default function CreateDocumentPage() {
         }
     }
 
+    function removeLineItem(index: number) {
+      setLineItems((currentItems) =>
+        currentItems.filter((_, currentIndex) => currentIndex !== index)
+      )
+    }
+
   return (
     <main>
       <h2>Dokument erstellen</h2>
@@ -261,6 +267,15 @@ export default function CreateDocumentPage() {
                 )
             }
             />
+
+            {lineItems.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeLineItem(index)}
+              >
+                Position entfernen
+              </button>
+            )}
         </div>
         ))}
 

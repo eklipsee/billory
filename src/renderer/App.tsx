@@ -11,20 +11,42 @@ import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
 import CreateDocumentPage from './pages/CreateDocumentPage'
 
+import { settingsApi } from './api/settingsApi'
+import SetupPage from './pages/SetupPage'
+
 import type { AppPage } from './types/navigation'
 
 export default function App() {
+
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true)
+  const [needsSetup, setNeedsSetup] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   const [activePage, setActivePage] =
     useState<AppPage>('dashboard')
 
   useEffect(() => {
-    const storedLogin = localStorage.getItem('isLoggedIn')
+    async function checkSetup() {
+      try {
+        await settingsApi.get()
 
-    if (storedLogin === 'true') {
-      setIsLoggedIn(true)
+        const storedLogin = localStorage.getItem('isLoggedIn')
+
+        if (storedLogin === 'true') {
+          setIsLoggedIn(true)
+        }
+
+        setNeedsSetup(false)
+      } catch {
+        setNeedsSetup(true)
+        localStorage.removeItem('isLoggedIn')
+        setIsLoggedIn(false)
+      } finally {
+        setIsCheckingSetup(false)
+      }
     }
+
+    checkSetup()
   }, [])
 
   function handleLoginSuccess() {
@@ -63,6 +85,22 @@ export default function App() {
       default:
         return <DashboardPage />
     }
+  }
+
+  if (isCheckingSetup) {
+    return <p>Prüfe Einrichtung...</p>
+  }
+
+  if (needsSetup) {
+    return (
+      <SetupPage
+        onSetupComplete={() => {
+          localStorage.removeItem('isLoggedIn')
+          setIsLoggedIn(false)
+          setNeedsSetup(false)
+        }}
+      />
+    )
   }
 
   if (!isLoggedIn) {

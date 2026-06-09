@@ -178,3 +178,7 @@ export type ChangePasswordRequest = {
   oldPassword: string
   newPassword: string
 }
+
+export type SettingsCreateRequest = SettingsUpdateRequest & {
+  password: string
+}
