@@ -169,7 +169,7 @@ export default function CustomersPage() {
       />
 
       {isLoading && <p>Lade Kunden...</p>}
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {!isLoading && (
         <table>

@@ -58,7 +58,7 @@ export default function ExportPage() {
         </button>
       )}
 
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {csvContent && (
         <div>

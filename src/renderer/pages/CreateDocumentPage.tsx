@@ -138,7 +138,7 @@ export default function CreateDocumentPage() {
     <main>
       <h2>Dokument erstellen</h2>
 
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <label>

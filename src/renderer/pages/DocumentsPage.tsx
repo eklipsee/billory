@@ -104,7 +104,7 @@ export default function DocumentsPage() {
       </div>
 
       {isLoading && <p>Lade Dokumente...</p>}
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       <p>
         {documents.length} Dokument(e) gefunden

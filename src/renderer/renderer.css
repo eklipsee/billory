@@ -45,3 +45,159 @@ button {
   color: white;
   border: 1px solid #222;
 }
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+main {
+  padding: 24px;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+input,
+select,
+button,
+textarea {
+  padding: 8px;
+  margin: 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  background: white;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f3f3f3;
+}
+
+tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.app-layout {
+  background: #f5f6f8;
+}
+
+.sidebar {
+  background: #1f2937;
+  color: white;
+}
+
+.sidebar h1 {
+  margin-top: 0;
+}
+
+.sidebar button {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.sidebar button:hover {
+  background: #374151;
+}
+
+.sidebar button.active {
+  background: #2563eb;
+  color: white;
+}
+
+.content {
+  background: #f5f6f8;
+  overflow: auto;
+}
+
+form {
+  background: white;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #2563eb;
+  border-color: #2563eb;
+}
+
+button {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+}
+
+button:hover {
+  background: #f3f4f6;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+h2 {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+pre {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 20px 0;
+}
