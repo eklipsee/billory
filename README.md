@@ -1,122 +1,166 @@
 # Billory – Rechnungs- und Angebotssoftware
-### Entwickelt für Baum Performance Stahl 
 
-> Lokale Desktop-Anwendung zur digitalen Erstellung, Verwaltung und Archivierung von Angeboten und Rechnungen – ohne Cloud, ohne Abo, ohne Internetzwischen.
+### Entwickelt für Baum Performance Stahl
 
-**Status:** Work in Progress – nicht für Produktion geeignet
+> Lokale Desktop-Anwendung zur Erstellung, Verwaltung und Archivierung von Angeboten, Rechnungen und Belegen.
 
----
-
-## Hintergrund
-
-Baum Performance Stahl erstellt Angebote und Rechnungen bisher manuell in Excel und archiviert diese teilweise in Papierform. Ziel dieses Projekts ist eine schlanke Desktop-Anwendung, die den gesamten Dokumentenprozess digitalisiert und vereinfacht – von der Angebotserstellung bis zur CSV-Übergabe an den Steuerberater.
+**Status:** Aktive Entwicklung
 
 ---
 
-## Features (geplant / im Aufbau)
+## Projektziel
 
-- Angebote erstellen und als PDF speichern
-- Angebote per Klick in Rechnungen umwandeln
-- Automatische Rechnungsnummerierung (Format `FNMMYY`, z. B. `F020325`)
-- Kundenverwaltung mit Stammdaten und Live-Suche
-- Zahlungsstatus je Rechnung (offen / bezahlt)
-- Übersicht offener Rechnungen und ausstehender Beträge
-- Mahnungserstellung aus Vorlage
-- Verwaltung externer Belege (Betriebsausgaben) mit Vorsteuerberechnung
-- CSV-Export aller Rechnungen zur Übergabe an den Steuerberater
-- Passwortschutz beim Anwendungsstart
-- Automatisches Datenbank-Backup beim Start
+Billory digitalisiert die bisher manuelle Verwaltung von Angeboten, Rechnungen und Belegen. Die Anwendung richtet sich an kleine Unternehmen und Einzelunternehmer, die ihre Dokumente lokal und ohne Cloud-Abhängigkeit verwalten möchten.
 
 ---
 
-## Architektur & Technologien
+## Aktuell implementierte Funktionen
 
-| Bereich | Technologie | Begründung |
-|---|---|---|
-| Desktop-Framework | Electron.js | Native Windows-App auf Basis von Web-Technologien – kein Java, keine externe Laufzeitumgebung nötig |
-| Frontend | React + TypeScript | Komponentenbasierte UI, statische Typisierung reduziert Laufzeitfehler |
-| Datenbank | SQLite | Dateibasiert, keine Installation, einfaches Backup durch Kopieren der Datei |
-| PDF-Erzeugung | PDFKit | Node.js-nativ, keine externe Abhängigkeit |
-| Packaging | Electron Builder + NSIS | Erzeugt Windows-Installer (.exe) mit Startmenü-Eintrag |
+### Authentifizierung
+
+- Passwortgeschützter Login
+- Passwort-Hashing mit BCrypt
+- Lokale Benutzerverwaltung
+
+### Kundenverwaltung
+
+- Kunden anlegen, bearbeiten und löschen
+- Live-Suche
+- Validierung und Fehlerbehandlung
+
+### Angebote & Rechnungen
+
+- Angebote erstellen
+- Rechnungen erstellen
+- Angebote in Rechnungen umwandeln
+- Automatische Rechnungsnummerierung
+- Dokumentstatus:
+  - Entwurf
+  - Offen
+  - Bezahlt
+  - Storniert
+- Historische Rechnungen erfassen
+
+### PDF-Erzeugung
+
+- PDF-Erstellung für Angebote und Rechnungen
+- Mahnungserstellung
+- Speicherung im konfigurierbaren Archivordner
+
+### Externe Belege
+
+- Verwaltung externer Belege
+- Jahresübersicht
+- Bearbeiten und Löschen von Belegen
+- Vorbereitung für CSV-Export
+
+### Einstellungen
+
+- Firmenstammdaten
+- Bankverbindung
+- Archivpfade
+- Belegpfade
+- Backup-Pfade
+- Mahnungsvorlagen
+- Rechtstexte
 
 ---
 
-## Installation & Start
+## Technologie-Stack
 
-**Voraussetzung**
-- Windows 10 oder Windows 11 (64-Bit)
-- Keine weitere Software erforderlich
-
-**Start (geplant)**
-1. Installer `billory-setup.exe` ausführen
-2. Anwendung über Startmenü starten
-3. Beim ersten Start: Passwort vergeben und Firmenstammdaten eingeben
-4. Loslegen
+| Bereich | Technologie |
+|----------|-------------|
+| Desktop | Electron |
+| Frontend | React 19 + TypeScript |
+| Backend | Spring Boot 3 |
+| Sprache | Java 21 |
+| Datenbank | SQLite |
+| ORM | Spring Data JPA / Hibernate |
+| Migrationen | Flyway |
+| Sicherheit | Spring Security + BCrypt |
+| Build | Maven |
+| Packaging | Electron Builder |
 
 ---
 
 ## Projektstruktur
 
-```
+```text
 billory/
+├── backend/                  # Spring Boot Backend
+│   ├── auth/
+│   ├── customer/
+│   ├── document/
+│   ├── externalinvoice/
+│   ├── pdf/
+│   └── settings/
 │
-├── docs/                          # Projektdokumentation
-│   ├── api-design.md
-│   ├── architecture.md
-│   ├── diagramme.md
-│   ├── lastenheft.md
-│   └── pflichtenheft.md
+├── docs/                     # Lastenheft, Pflichtenheft, Architektur
 │
 ├── src/
-│   ├── main/                      # Electron Main Process (Node.js)
-│   │   ├── ipc/                   # IPC Handler
-│   │   ├── services/              # Geschäftslogik
-│   │   ├── repositories/          # Datenbankzugriffe
-│   │   └── migrations/            # Datenbankmigrationen
-│   │
-│   └── renderer/                  # React Frontend
-│       ├── components/            # Wiederverwendbare UI-Komponenten
-│       ├── pages/                 # Seiten (Dashboard, Rechnungen, Kunden …)
-│       └── context/               # State Management
+│   ├── main/                 # Electron Main Process
+│   └── renderer/
+│       ├── api/
+│       ├── layouts/
+│       ├── pages/
+│       └── types/
 │
-└── assets/                        # Logo, Icons
+└── README.md
+
+---
+
+## Entwicklung starten
+
+### Backend
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+Backend läuft anschließend auf:
+
+```text
+http://localhost:8080
+```
+
+### Frontend / Electron
+
+```bash
+npm install
+npm run dev
 ```
 
 ---
 
 ## Roadmap
 
-- [ ] Projekt-Setup (Electron + React + TypeScript + SQLite)
-- [ ] Datenbankschema und Migrations-System
-- [ ] Authentifizierung (Passwortschutz)
-- [ ] Kundenverwaltung
-- [ ] Angebots- und Rechnungserstellung
-- [ ] PDF-Generierung
-- [ ] Externe Belegverwaltung
+- [x] Authentifizierung
+- [x] Kundenverwaltung
+- [x] Dokumentverwaltung
+- [x] PDF-Erzeugung
+- [x] Historische Rechnungen
+- [x] Externe Belege
 - [ ] CSV-Export
+- [ ] Dashboard-Kennzahlen
+- [ ] Dateiauswahl für PDFs
 - [ ] Windows-Installer
-- [ ] Abnahmetests beim Kunden
+- [ ] Produktivtests
 
 ---
 
 ## Nicht-Ziele
 
-Folgende Funktionen sind bewusst nicht Bestandteil des Projekts:
-
-- Cloud-Speicherung oder Mehrbenutzerbetrieb
+- Cloud-Synchronisation
+- Mehrbenutzerbetrieb
 - Vollständige Buchhaltungssoftware
 - Online-Zahlungsabwicklung
-- Automatische Verarbeitung eingescannter Dokumente
-
----
-
-## Dokumentation
-
-Die vollständige Projektdokumentation (Lastenheft, Pflichtenheft, Datenbankarchitektur, API-Design, Architekturdiagramme) befindet sich im [`docs/`](./docs) Ordner.
+- OCR-Dokumentenerkennung
 
 ---
 
 ## Autor
 
 **Daniel Schitz**
-Alleiniger Entwickler
+
+Softwareentwickler
