@@ -145,3 +145,36 @@ export type ExternalInvoiceSummary = {
   totalNet: number
   totalTax: number
 }
+
+export type Settings = {
+  id: number
+  companyName: string
+  ownerName: string
+  street: string
+  zip: string
+  city: string
+  phone?: string | null
+  email?: string | null
+  taxNumber: string
+  iban?: string | null
+  bankName?: string | null
+  logoPath?: string | null
+  archivePath: string
+  backupPath?: string | null
+  receiptsPath?: string | null
+  reminderTemplate?: string | null
+  invoicePrivacyNotice?: string | null
+  offerWithdrawalNotice?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type SettingsUpdateRequest = Omit<
+  Settings,
+  'id' | 'createdAt' | 'updatedAt'
+>
+
+export type ChangePasswordRequest = {
+  oldPassword: string
+  newPassword: string
+}
