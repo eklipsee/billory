@@ -201,3 +201,23 @@ hr {
   border-top: 1px solid #ddd;
   margin: 20px 0;
 }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dashboard-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.dashboard-card strong {
+  display: block;
+  font-size: 24px;
+  margin-top: 8px;
+}
