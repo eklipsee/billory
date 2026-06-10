@@ -54,6 +54,7 @@ export type DocumentSummary = {
   status: DocumentStatus
   isHistorical?: boolean
   invoiceNumber?: string | null
+  convertedFromId?: number
   customerId: number
   customerName: string
   documentDate: string
@@ -183,14 +184,22 @@ export type SettingsCreateRequest = SettingsUpdateRequest & {
   password: string
 }
 
+export type BilloryFolderName =
+  | 'Rechnungen'
+  | 'Angebote'
+  | 'Mahnungen'
+  | 'Belege'
+  | 'Backups'
+
 export type ElectronAPI = {
   selectPdfFile: () => Promise<string | null>
   openFile: (filePath: string) => Promise<boolean>
   openFolder: (folderPath: string) => Promise<boolean>
+  openBilloryFolder: (folderName: BilloryFolderName) => Promise<boolean>
 }
 
 declare global {
   interface Window {
-    electronAPI?: ElectronAPI
+    electronAPI: ElectronAPI
   }
 }

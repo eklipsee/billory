@@ -149,148 +149,167 @@ export default function CreateDocumentPage() {
       {error && <p className="error">{error}</p>}
       {successMessage && <p>{successMessage}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <label>
-            <input
+      <form onSubmit={handleSubmit} className="document-form">
+        <div className="document-card">
+          <h3>Basisdaten</h3>
+          <div className="document-grid">
+            <label className="historical-toggle">
+              <input
                 type="checkbox"
                 checked={isHistorical}
                 onChange={(event) => {
-                setIsHistorical(event.target.checked)
+                  setIsHistorical(event.target.checked)
 
-                if (event.target.checked) {
+                  if (event.target.checked) {
                     setType('INVOICE')
-                }
+                  }
                 }}
-            />
-            Historische Rechnung
-        </label>
-        <select
-            value={type}
-            disabled={isHistorical}
-            onChange={(event) =>
-                setType(event.target.value as DocumentType)
-            }
-        >
-          <option value="INVOICE">Rechnung</option>
-          <option value="OFFER">Angebot</option>
-        </select>
-        {isHistorical && (
-        <>
-            <input
-            type="text"
-            placeholder="Rechnungsnummer"
-            value={invoiceNumber}
-            onChange={(event) =>
-                setInvoiceNumber(event.target.value)
-            }
-            />
+              />
+
+              <div>
+                <strong>Historische Rechnung</strong>
+                <span>
+                  Für bereits vorhandene Rechnungen mit manueller Rechnungsnummer.
+                </span>
+              </div>
+            </label>
+            <select
+                value={type}
+                disabled={isHistorical}
+                onChange={(event) =>
+                    setType(event.target.value as DocumentType)
+                }
+            >
+              <option value="INVOICE">Rechnung</option>
+              <option value="OFFER">Angebot</option>
+            </select>
+            {isHistorical && (
+            <>
+                <input
+                type="text"
+                placeholder="Rechnungsnummer"
+                value={invoiceNumber}
+                onChange={(event) =>
+                    setInvoiceNumber(event.target.value)
+                }
+                />
+
+                <select
+                value={historicalStatus}
+                onChange={(event) =>
+                    setHistoricalStatus(
+                    event.target.value as DocumentStatus
+                    )
+                }
+                >
+                <option value="OPEN">Offen</option>
+                <option value="PAID">Bezahlt</option>
+                </select>
+            </>
+            )}
 
             <select
-            value={historicalStatus}
-            onChange={(event) =>
-                setHistoricalStatus(
-                event.target.value as DocumentStatus
-                )
-            }
+              value={customerId}
+              onChange={(event) => setCustomerId(event.target.value)}
             >
-            <option value="OPEN">Offen</option>
-            <option value="PAID">Bezahlt</option>
+              <option value="">Kunde auswählen</option>
+
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name}
+                </option>
+              ))}
             </select>
-        </>
-        )}
-
-        <select
-          value={customerId}
-          onChange={(event) => setCustomerId(event.target.value)}
-        >
-          <option value="">Kunde auswählen</option>
-
-          {customers.map((customer) => (
-            <option key={customer.id} value={customer.id}>
-              {customer.name}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="date"
-          value={documentDate}
-          onChange={(event) => setDocumentDate(event.target.value)}
-        />
-
-        {type === 'INVOICE' && (
-          <input
-            type="date"
-            value={serviceDate}
-            onChange={(event) => setServiceDate(event.target.value)}
-          />
-        )}
-
-        {type === 'OFFER' && (
-          <input
-            type="date"
-            value={validUntil}
-            onChange={(event) => setValidUntil(event.target.value)}
-          />
-        )}
-
-        <input
-          type="text"
-          placeholder="Notizen"
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-        />
-
-        <h3>Positionen</h3>
-
-        {lineItems.map((item, index) => (
-        <div key={index}>
-            <input
-            type="text"
-            placeholder="Beschreibung"
-            value={item.description}
-            onChange={(event) =>
-                updateLineItem(
-                index,
-                'description',
-                event.target.value
-                )
-            }
-            />
 
             <input
-            type="number"
-            placeholder="Netto"
-            value={item.netAmount}
-            onChange={(event) =>
-                updateLineItem(
-                index,
-                'netAmount',
-                event.target.value
-                )
-            }
+              type="date"
+              value={documentDate}
+              onChange={(event) => setDocumentDate(event.target.value)}
             />
 
-            {lineItems.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeLineItem(index)}
-              >
-                Position entfernen
-              </button>
+            {type === 'INVOICE' && (
+              <input
+                type="date"
+                value={serviceDate}
+                onChange={(event) => setServiceDate(event.target.value)}
+              />
             )}
-        </div>
-        ))}
 
-        <button
-        type="button"
-        onClick={addLineItem}
-        >
-            Position hinzufügen
-        </button>
-        <button type="submit" disabled={isSaving}>
-            {isSaving ? 'Speichert...' : 'Dokument speichern'}
-        </button>
+            {type === 'OFFER' && (
+              <input
+                type="date"
+                value={validUntil}
+                onChange={(event) => setValidUntil(event.target.value)}
+              />
+            )}
+
+            <div className="full-width">
+              <input
+                type="text"
+                placeholder="Notizen"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+              />
+            </div>
+
+          </div>
+        </div>
+        <div className="document-card">
+          <h3>Positionen</h3>
+
+          {lineItems.map((item, index) => (
+            <div key={index} className="line-item-row">
+              <input
+              type="text"
+              placeholder="Beschreibung"
+              value={item.description}
+              onChange={(event) =>
+                  updateLineItem(
+                  index,
+                  'description',
+                  event.target.value
+                  )
+              }
+              />
+
+              <input
+              type="number"
+              placeholder="Netto"
+              value={item.netAmount}
+              onChange={(event) =>
+                  updateLineItem(
+                  index,
+                  'netAmount',
+                  event.target.value
+                  )
+              }
+              />
+
+              {lineItems.length > 1 && (
+                <button
+                  type="button"
+                  className="delete-action"
+                  onClick={() => removeLineItem(index)}
+                >
+                  Entfernen
+                </button>
+              )}
+          </div>
+          ))}
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={addLineItem}
+          >
+            + Position hinzufügen
+          </button>
+          <div className="document-submit-row">
+            <button type="submit" className="primary-button" disabled={isSaving}>
+              {isSaving ? 'Speichert...' : 'Dokument speichern'}
+            </button>
+          </div>
+        </div>
       </form>
     </main>
   )

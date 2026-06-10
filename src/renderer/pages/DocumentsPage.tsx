@@ -4,11 +4,14 @@ import { documentApi } from '../api/documentApi'
 
 import { pdfApi } from '../api/pdfApi'
 
+import type { AppPage } from '../types/navigation'
+
 import type {
   DocumentStatus,
   DocumentSummary,
   DocumentType,
 } from '../types/api'
+
 
 function formatDocumentType(type: string) {
   return type === 'INVOICE' ? 'Rechnung' : 'Angebot'
@@ -36,13 +39,18 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 
-export default function DocumentsPage() {
+type DocumentsPageProps = {
+  onNavigate?: (page: AppPage) => void
+}
+
+export default function DocumentsPage({ onNavigate }: DocumentsPageProps) {
   const [documents, setDocuments] = useState<DocumentSummary[]>([])
   const [typeFilter, setTypeFilter] = useState<DocumentType | ''>('')
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | ''>('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [openActionMenuId, setOpenActionMenuId] = useState<number | null>(null)
 
   async function loadDocuments() {
     setIsLoading(true)
@@ -72,9 +80,25 @@ export default function DocumentsPage() {
 
   return (
     <main>
-      <h2>Dokumente</h2>
+      <div className="page-header">
+        <div>
+          <h2>Dokumente</h2>
 
-      <div>
+          <p className="page-subtitle">
+            Verwalten Sie Angebote, Rechnungen und Mahnungen.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => onNavigate?.('createDocument')}
+        >
+          + Dokument erstellen
+        </button>
+      </div>
+
+      <div className="filter-card document-filter-card">
         <select
           value={typeFilter}
           onChange={(event) =>
@@ -108,9 +132,7 @@ export default function DocumentsPage() {
       {error && <p className="error">{error}</p>}
       {successMessage && <p>{successMessage}</p>}
 
-      <p>
-        {documents.length} Dokument(e) gefunden
-      </p>
+      <p>{documents.length} Dokument(e) gefunden</p>
 
       {!isLoading && (
         <table>
@@ -128,190 +150,244 @@ export default function DocumentsPage() {
           </thead>
 
           <tbody>
-
             {documents.length === 0 && (
               <tr>
-                <td colSpan={8}>
-                  Keine Dokumente gefunden.
-                </td>
+                <td colSpan={8}>Keine Dokumente gefunden.</td>
               </tr>
             )}
-            
-            {documents.map((document) => (
-              <tr key={document.id}>
-                <td>{formatDocumentType(document.type)}</td>
-                <td>{formatDocumentStatus(document.status)}</td>
-                <td>{document.isHistorical ? 'Ja' : 'Nein'}</td>
-                <td>{document.invoiceNumber || '-'}</td>
-                <td>{document.customerName}</td>
-                <td>{document.documentDate}</td>
-                <td>{formatCurrency(document.grossTotal)}</td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        setSuccessMessage('')
-                        const filePath =
-                          await pdfApi.generateDocument(document.id)
 
-                        setSuccessMessage(
-                          `PDF erzeugt: ${filePath.filePath}`
-                        )
+            {documents.map((document) => {
+              const isConvertedOffer =
+                document.type === 'OFFER' &&
+                documents.some(
+                  (otherDocument) =>
+                    otherDocument.type === 'INVOICE' &&
+                    otherDocument.convertedFromId === document.id
+                )
 
-                        await loadDocuments()
-                      } catch (error) {
-                        setError(
-                          error instanceof Error
-                            ? error.message
-                            : 'PDF konnte nicht erzeugt werden.'
-                        )
-                      }
-                    }}
-                  >
-                    PDF erzeugen
-                  </button>
-
-                  {document.type === 'INVOICE' && document.status === 'OPEN' && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        setSuccessMessage('')
-                        const filePath =
-                          await pdfApi.generateReminder(document.id)
-
-                        setSuccessMessage(
-                          `Mahnung erzeugt: ${filePath.filePath}`
-                        )
-                      } catch (error) {
-                        setError(
-                          error instanceof Error
-                            ? error.message
-                            : 'Mahnung konnte nicht erzeugt werden.'
-                        )
-                      }
-                    }}
-                    >
-                      Mahnung erzeugen
-                    </button>
-                  )}
-
-                  {document.type === 'INVOICE' && document.status === 'OPEN' && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          setSuccessMessage('')
-                          await documentApi.updateStatus(document.id, {
-                            status: 'PAID',
-                          })
-
-                          setSuccessMessage('Rechnung als bezahlt markiert.')
-
-                          await loadDocuments()
-                        } catch (error) {
-                          setError(
-                            error instanceof Error
-                              ? error.message
-                              : 'Status konnte nicht geändert werden.'
+              return (
+                <tr key={document.id}>
+                  <td>{formatDocumentType(document.type)}</td>
+                  <td>
+                    <span className={`status-badge status-${document.status.toLowerCase()}`}>
+                      {formatDocumentStatus(document.status)}
+                    </span>
+                  </td>
+                  <td>{document.isHistorical ? 'Ja' : 'Nein'}</td>
+                  <td>{document.invoiceNumber || '-'}</td>
+                  <td>{document.customerName}</td>
+                  <td>{document.documentDate}</td>
+                  <td>{formatCurrency(document.grossTotal)}</td>
+                  <td className="document-actions">
+                    <div className="action-menu-wrapper">
+                      <button
+                        type="button"
+                        className="action-menu-button"
+                        onClick={() =>
+                          setOpenActionMenuId(
+                            openActionMenuId === document.id ? null : document.id
                           )
                         }
-                      }}
-                    >
-                      Als bezahlt markieren
-                    </button>
-                  )}
+                      >
+                        ⋮
+                      </button>
 
-                  {document.type === 'OFFER' && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          setSuccessMessage('')
+                      {openActionMenuId === document.id && (
+                        <div className="action-menu">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setOpenActionMenuId(null)
 
-                          const createdInvoice =
-                            await documentApi.convertToInvoice({
-                              offerId: document.id,
-                            })
+                              try {
+                                setError('')
+                                setSuccessMessage('')
 
-                          setSuccessMessage(
-                            `Rechnung erstellt: ${createdInvoice.invoiceNumber || createdInvoice.id}`
-                          )
+                                const filePath = await pdfApi.generateDocument(document.id)
 
-                          await loadDocuments()
-                        } catch (error) {
-                          setError(
-                            error instanceof Error
-                              ? error.message
-                              : 'Angebot konnte nicht konvertiert werden.'
-                          )
-                        }
-                      }}
-                    >
-                      Zu Rechnung konvertieren
-                    </button>
-                  )}
+                                setSuccessMessage(`PDF erzeugt: ${filePath.filePath}`)
 
-                  {document.type === 'OFFER' && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const confirmed = window.confirm(
-                          'Dieses Angebot wirklich löschen?'
-                        )
+                                await loadDocuments()
+                              } catch (error) {
+                                setError(
+                                  error instanceof Error
+                                    ? error.message
+                                    : 'PDF konnte nicht erzeugt werden.'
+                                )
+                              }
+                            }}
+                          >
+                            PDF erzeugen
+                          </button>
 
-                        if (!confirmed) {
-                          return
-                        }
+                          {document.type === 'INVOICE' && document.status === 'OPEN' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setOpenActionMenuId(null)
 
-                        try {
-                          setSuccessMessage('')
+                                  try {
+                                    setError('')
+                                    setSuccessMessage('')
 
-                          await documentApi.delete(document.id)
-                          setSuccessMessage('Angebot wurde gelöscht.')
-                          await loadDocuments()
-                        } catch (error) {
-                          setError(
-                            error instanceof Error
-                              ? error.message
-                              : 'Angebot konnte nicht gelöscht werden.'
-                          )
-                        }
-                      }}
-                    >
-                      Angebot löschen
-                    </button>
-                  )}
+                                    const filePath = await pdfApi.generateReminder(document.id)
 
-                  {document.isHistorical && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const sourceFilePath = 'C:/Users/Daniel/Desktop/test.pdf'
+                                    setSuccessMessage(`Mahnung erzeugt: ${filePath.filePath}`)
+                                  } catch (error) {
+                                    setError(
+                                      error instanceof Error
+                                        ? error.message
+                                        : 'Mahnung konnte nicht erzeugt werden.'
+                                    )
+                                  }
+                                }}
+                              >
+                                Mahnung erzeugen
+                              </button>
 
-                        try {
-                          await documentApi.attachPdf(document.id, {
-                            sourceFilePath,
-                          })
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setOpenActionMenuId(null)
 
-                          setSuccessMessage('PDF wurde angehängt.')
-                          await loadDocuments()
-                        } catch (error) {
-                          setError(
-                            error instanceof Error
-                              ? error.message
-                              : 'PDF konnte nicht angehängt werden.'
-                          )
-                        }
-                      }}
-                    >
-                      PDF anhängen
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                                  try {
+                                    setError('')
+                                    setSuccessMessage('')
+
+                                    await documentApi.updateStatus(document.id, {
+                                      status: 'PAID',
+                                    })
+
+                                    setSuccessMessage('Rechnung als bezahlt markiert.')
+
+                                    await loadDocuments()
+                                  } catch (error) {
+                                    setError(
+                                      error instanceof Error
+                                        ? error.message
+                                        : 'Status konnte nicht geändert werden.'
+                                    )
+                                  }
+                                }}
+                              >
+                                Als bezahlt markieren
+                              </button>
+                            </>
+                          )}
+
+                          {document.type === 'OFFER' && !isConvertedOffer && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setOpenActionMenuId(null)
+
+                                try {
+                                  setError('')
+                                  setSuccessMessage('')
+
+                                  const createdInvoice = await documentApi.convertToInvoice({
+                                    offerId: document.id,
+                                  })
+
+                                  setSuccessMessage(
+                                    `Rechnung erstellt: ${
+                                      createdInvoice.invoiceNumber || createdInvoice.id
+                                    }`
+                                  )
+
+                                  await loadDocuments()
+                                } catch (error) {
+                                  setError(
+                                    error instanceof Error
+                                      ? error.message
+                                      : 'Angebot konnte nicht konvertiert werden.'
+                                  )
+                                }
+                              }}
+                            >
+                              Zu Rechnung konvertieren
+                            </button>
+                          )}
+
+                          {document.type === 'OFFER' && isConvertedOffer && (
+                            <div className="action-menu-info">
+                              Bereits konvertiert
+                            </div>
+                          )}
+
+                          {document.type === 'OFFER' && (
+                            <button
+                              type="button"
+                              className="danger-menu-item"
+                              onClick={async () => {
+                                setOpenActionMenuId(null)
+
+                                const confirmed = window.confirm(
+                                  'Dieses Angebot wirklich löschen?'
+                                )
+
+                                if (!confirmed) {
+                                  return
+                                }
+
+                                try {
+                                  setError('')
+                                  setSuccessMessage('')
+
+                                  await documentApi.delete(document.id)
+                                  setSuccessMessage('Angebot wurde gelöscht.')
+                                  await loadDocuments()
+                                } catch (error) {
+                                  setError(
+                                    error instanceof Error
+                                      ? error.message
+                                      : 'Angebot konnte nicht gelöscht werden.'
+                                  )
+                                }
+                              }}
+                            >
+                              Angebot löschen
+                            </button>
+                          )}
+
+                          {document.isHistorical && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setOpenActionMenuId(null)
+
+                                const sourceFilePath = 'C:/Users/Daniel/Desktop/test.pdf'
+
+                                try {
+                                  setError('')
+                                  setSuccessMessage('')
+
+                                  await documentApi.attachPdf(document.id, {
+                                    sourceFilePath,
+                                  })
+
+                                  setSuccessMessage('PDF wurde angehängt.')
+                                  await loadDocuments()
+                                } catch (error) {
+                                  setError(
+                                    error instanceof Error
+                                      ? error.message
+                                      : 'PDF konnte nicht angehängt werden.'
+                                  )
+                                }
+                              }}
+                            >
+                              PDF anhängen
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       )}

@@ -151,7 +151,12 @@ public class PdfService {
 
         try {
 
-            Path outputDir = Path.of(settings.getArchivePath(), "Mahnungen");
+            Path outputDir = Path.of(
+                    settings.getArchivePath(),
+                    "Mahnungen",
+                    extractYear(invoice.getDocumentDate())
+            );
+            
             Files.createDirectories(outputDir);
 
             String fileName = "Mahnung_" + invoice.getInvoiceNumber() + ".pdf";

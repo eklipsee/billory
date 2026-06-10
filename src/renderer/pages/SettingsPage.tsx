@@ -222,34 +222,37 @@ export default function SettingsPage() {
           }
         />
 
-        <h3>Pfade</h3>
+        <h3>Speicherorte</h3>
 
-        <input
-          type="text"
-          placeholder="Archivpfad"
-          value={settings.archivePath}
-          onChange={(event) =>
-            setSettings({ ...settings, archivePath: event.target.value })
-          }
-        />
+        <div className="storage-info">
+          <p>
+            Billory erstellt und verwaltet alle Ordner automatisch.
+          </p>
 
-        <input
-          type="text"
-          placeholder="Backup-Pfad"
-          value={settings.backupPath || ''}
-          onChange={(event) =>
-            setSettings({ ...settings, backupPath: event.target.value })
-          }
-        />
+          <strong>Dokumente/Billory</strong>
 
-        <input
-          type="text"
-          placeholder="Belegpfad"
-          value={settings.receiptsPath || ''}
-          onChange={(event) =>
-            setSettings({ ...settings, receiptsPath: event.target.value })
-          }
-        />
+          <div className="folder-buttons">
+            <button type="button" onClick={() => window.electronAPI.openBilloryFolder('Rechnungen')}>
+              📁 Rechnungen öffnen
+            </button>
+
+            <button type="button" onClick={() => window.electronAPI.openBilloryFolder('Angebote')}>
+              📁 Angebote öffnen
+            </button>
+
+            <button type="button" onClick={() => window.electronAPI.openBilloryFolder('Mahnungen')}>
+              📁 Mahnungen öffnen
+            </button>
+
+            <button type="button" onClick={() => window.electronAPI.openBilloryFolder('Belege')}>
+              📁 Belege öffnen
+            </button>
+
+            <button type="button" onClick={() => window.electronAPI.openBilloryFolder('Backups')}>
+              📁 Backups öffnen
+            </button>
+          </div>
+        </div>
 
         <h3>Texte</h3>
 

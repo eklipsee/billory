@@ -29,6 +29,7 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState<CustomerFormState>(emptyForm)
   const [editingCustomerId, setEditingCustomerId] = useState<number | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -61,115 +62,162 @@ export default function CustomersPage() {
     }))
   }
 
+  function openCreateForm() {
+    setEditingCustomerId(null)
+    setForm(emptyForm)
+    setIsFormOpen(true)
+  }
+
+  function closeForm() {
+    setEditingCustomerId(null)
+    setForm(emptyForm)
+    setIsFormOpen(false)
+  }
+
   async function handleSubmitCustomer(event: React.FormEvent) {
-        event.preventDefault()
-        setError('')
+    event.preventDefault()
+    setError('')
 
-        try {
-            if (editingCustomerId === null) {
-            await customerApi.create(form)
-            } else {
-            await customerApi.update(editingCustomerId, form)
-            }
+    try {
+      if (editingCustomerId === null) {
+        await customerApi.create(form)
+      } else {
+        await customerApi.update(editingCustomerId, form)
+      }
 
-            setForm(emptyForm)
-            setEditingCustomerId(null)
-            await loadCustomers(search)
-        } catch (error) {
-            setError(
-            error instanceof Error
-                ? error.message
-                : 'Kunde konnte nicht gespeichert werden.'
-            )
-        }
+      closeForm()
+      await loadCustomers(search)
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Kunde konnte nicht gespeichert werden.'
+      )
     }
+  }
 
   return (
     <main>
       <h2>Kunden</h2>
 
-      <form onSubmit={handleSubmitCustomer}>
-        <h3>{editingCustomerId === null ? 'Neuen Kunden anlegen' : 'Kunden bearbeiten'}</h3>
+      <p className="page-subtitle">
+        Verwalten Sie Ihre Kundenstammdaten.
+      </p>
 
+      {error && <p className="error">{error}</p>}
+
+      <div className="customer-toolbar">
         <input
           type="text"
-          placeholder="Name"
-          value={form.name}
-          onChange={(event) => updateForm('name', event.target.value)}
+          placeholder="Kunde suchen..."
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
         />
 
-        <input
-          type="text"
-          placeholder="Straße"
-          value={form.street}
-          onChange={(event) => updateForm('street', event.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="PLZ"
-          value={form.zip}
-          onChange={(event) => updateForm('zip', event.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Ort"
-          value={form.city}
-          onChange={(event) => updateForm('city', event.target.value)}
-        />
-
-        <input
-          type="email"
-          placeholder="E-Mail"
-          value={form.email}
-          onChange={(event) => updateForm('email', event.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Telefon"
-          value={form.phone}
-          onChange={(event) => updateForm('phone', event.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Notizen"
-          value={form.notes}
-          onChange={(event) => updateForm('notes', event.target.value)}
-        />
-
-        <button type="submit">
-          {editingCustomerId === null
-            ? 'Kunde speichern'
-            : 'Änderungen speichern'}
+        <button type="button" className="primary-button" onClick={openCreateForm}>
+          + Neuer Kunde
         </button>
+      </div>
 
-        {editingCustomerId !== null && (
-          <button
-            type="button"
-            onClick={() => {
-              setEditingCustomerId(null)
-              setForm(emptyForm)
-            }}
-          >
-            Abbrechen
-          </button>
-        )}
-      </form>
+      {isFormOpen && (
+        <form className="customer-form-card" onSubmit={handleSubmitCustomer}>
+          <div className="form-header">
+            <h3>
+              {editingCustomerId === null
+                ? 'Neuen Kunden anlegen'
+                : 'Kunden bearbeiten'}
+            </h3>
 
-      <hr />
+            <button type="button" className="icon-button" onClick={closeForm}>
+              ×
+            </button>
+          </div>
 
-      <input
-        type="text"
-        placeholder="Kunde suchen..."
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-      />
+          <div className="customer-form-grid">
+            <label>
+              Name *
+              <input
+                type="text"
+                placeholder="z. B. Max Mustermann"
+                value={form.name}
+                onChange={(event) => updateForm('name', event.target.value)}
+              />
+            </label>
+
+            <label>
+              Straße
+              <input
+                type="text"
+                placeholder="z. B. Musterstraße 1"
+                value={form.street}
+                onChange={(event) => updateForm('street', event.target.value)}
+              />
+            </label>
+
+            <label>
+              PLZ
+              <input
+                type="text"
+                placeholder="z. B. 12345"
+                value={form.zip}
+                onChange={(event) => updateForm('zip', event.target.value)}
+              />
+            </label>
+
+            <label>
+              Ort
+              <input
+                type="text"
+                placeholder="z. B. Musterstadt"
+                value={form.city}
+                onChange={(event) => updateForm('city', event.target.value)}
+              />
+            </label>
+
+            <label>
+              E-Mail
+              <input
+                type="email"
+                placeholder="z. B. max@example.com"
+                value={form.email}
+                onChange={(event) => updateForm('email', event.target.value)}
+              />
+            </label>
+
+            <label>
+              Telefon
+              <input
+                type="text"
+                placeholder="z. B. 0123 456789"
+                value={form.phone}
+                onChange={(event) => updateForm('phone', event.target.value)}
+              />
+            </label>
+
+            <label className="notes-field">
+              Notizen
+              <input
+                type="text"
+                placeholder="Notizen optional"
+                value={form.notes}
+                onChange={(event) => updateForm('notes', event.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="form-actions">
+            <button type="button" onClick={closeForm}>
+              Abbrechen
+            </button>
+
+            <button type="submit" className="primary-button">
+              Speichern
+            </button>
+          </div>
+        </form>
+      )}
 
       {isLoading && <p>Lade Kunden...</p>}
-      {error && <p className="error">{error}</p>}
 
       {!isLoading && (
         <table>
@@ -184,6 +232,12 @@ export default function CustomersPage() {
           </thead>
 
           <tbody>
+            {customers.length === 0 && (
+              <tr>
+                <td colSpan={5}>Keine Kunden gefunden.</td>
+              </tr>
+            )}
+
             {customers.map((customer) => (
               <tr key={customer.id}>
                 <td>{customer.name}</td>
@@ -193,49 +247,57 @@ export default function CustomersPage() {
                 <td>{customer.email || '-'}</td>
                 <td>{customer.phone || '-'}</td>
                 <td>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingCustomerId(customer.id)
+                  <div className="table-actions">
+                    <button
+                      type="button"
+                      className="icon-action edit-action"
+                      title="Bearbeiten"
+                      onClick={() => {
+                        setEditingCustomerId(customer.id)
+                        setIsFormOpen(true)
 
-                      setForm({
-                        name: customer.name,
-                        street: customer.street,
-                        zip: customer.zip,
-                        city: customer.city,
-                        email: customer.email || '',
-                        phone: customer.phone || '',
-                        notes: customer.notes || '',
-                      })
-                    }}
-                  >
-                    Bearbeiten
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const confirmed = window.confirm(
-                        `Kunde "${customer.name}" wirklich löschen?`
-                      )
+                        setForm({
+                          name: customer.name,
+                          street: customer.street,
+                          zip: customer.zip,
+                          city: customer.city,
+                          email: customer.email || '',
+                          phone: customer.phone || '',
+                          notes: customer.notes || '',
+                        })
+                      }}
+                    >
+                      ✎
+                    </button>
 
-                      if (!confirmed) {
-                        return
-                      }
-
-                      try {
-                        await customerApi.delete(customer.id)
-                        await loadCustomers(search)
-                      } catch (error) {
-                        setError(
-                          error instanceof Error
-                            ? error.message
-                            : 'Kunde konnte nicht gelöscht werden.'
+                    <button
+                      type="button"
+                      className="icon-action delete-action"
+                      title="Löschen"
+                      onClick={async () => {
+                        const confirmed = window.confirm(
+                          `Kunde "${customer.name}" wirklich löschen?`
                         )
-                      }
-                    }}
-                  >
-                    Löschen
-                  </button>
+
+                        if (!confirmed) {
+                          return
+                        }
+
+                        try {
+                          await customerApi.delete(customer.id)
+                          await loadCustomers(search)
+                        } catch (error) {
+                          setError(
+                            error instanceof Error
+                              ? error.message
+                              : 'Kunde konnte nicht gelöscht werden.'
+                          )
+                        }
+                      }}
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.IOException;
 
 @Service
 public class SettingsService {
@@ -33,6 +36,12 @@ public class SettingsService {
 
         String now = LocalDateTime.now().toString();
 
+        String basePath =
+        System.getProperty("user.home")
+                + "/Documents/Billory";
+
+        createDefaultDirectories();
+
         Settings settings = new Settings();
         settings.setId(SETTINGS_ID);
         settings.setCompanyName(request.getCompanyName());
@@ -47,9 +56,9 @@ public class SettingsService {
         settings.setBankName(request.getBankName());
         settings.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         settings.setLogoPath(request.getLogoPath());
-        settings.setArchivePath(request.getArchivePath());
-        settings.setBackupPath(request.getBackupPath());
-        settings.setReceiptsPath(request.getReceiptsPath());
+        settings.setArchivePath(basePath);
+        settings.setBackupPath(basePath + "/Backups");
+        settings.setReceiptsPath(basePath + "/Belege");
         settings.setReminderTemplate(request.getReminderTemplate());
         settings.setInvoicePrivacyNotice(request.getInvoicePrivacyNotice());
         settings.setOfferWithdrawalNotice(request.getOfferWithdrawalNotice());
@@ -63,6 +72,12 @@ public class SettingsService {
         Settings settings = settingsRepository.findById(SETTINGS_ID)
                 .orElseThrow(() -> new NotFoundException("Settings not found"));
 
+        String basePath =
+        System.getProperty("user.home")
+                + "/Documents/Billory";
+
+        createDefaultDirectories();
+
         settings.setCompanyName(request.getCompanyName());
         settings.setOwnerName(request.getOwnerName());
         settings.setStreet(request.getStreet());
@@ -74,15 +89,32 @@ public class SettingsService {
         settings.setIban(request.getIban());
         settings.setBankName(request.getBankName());
         settings.setLogoPath(request.getLogoPath());
-        settings.setArchivePath(request.getArchivePath());
-        settings.setBackupPath(request.getBackupPath());
-        settings.setReceiptsPath(request.getReceiptsPath());
+        settings.setArchivePath(basePath);
+        settings.setBackupPath(basePath + "/Backups");
+        settings.setReceiptsPath(basePath + "/Belege");
         settings.setReminderTemplate(request.getReminderTemplate());
         settings.setInvoicePrivacyNotice(request.getInvoicePrivacyNotice());
         settings.setOfferWithdrawalNotice(request.getOfferWithdrawalNotice());
         settings.setUpdatedAt(LocalDateTime.now().toString());
 
         return toResponse(settingsRepository.save(settings));
+    }
+
+    private void createDefaultDirectories() {
+        try {
+            String documentsPath =
+                    System.getProperty("user.home")
+                            + "/Documents/Billory";
+
+            Files.createDirectories(Path.of(documentsPath, "Rechnungen"));
+            Files.createDirectories(Path.of(documentsPath, "Angebote"));
+            Files.createDirectories(Path.of(documentsPath, "Mahnungen"));
+            Files.createDirectories(Path.of(documentsPath, "Belege"));
+            Files.createDirectories(Path.of(documentsPath, "Backups"));
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create Billory directories", e);
+        }
     }
 
     private SettingsResponse toResponse(Settings settings) {

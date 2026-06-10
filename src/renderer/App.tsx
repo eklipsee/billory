@@ -68,7 +68,7 @@ export default function App() {
         return <CustomersPage />
 
       case 'documents':
-        return <DocumentsPage />
+        return <DocumentsPage onNavigate={setActivePage} />
 
       case 'createDocument':
         return <CreateDocumentPage />

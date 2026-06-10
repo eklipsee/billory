@@ -343,6 +343,9 @@ public class DocumentService {
         if (offer.getType() != DocumentType.OFFER) {
             throw new InvalidDocumentConversionException("Only offers can be converted to invoices");
         }
+        if (documentRepository.existsByConvertedFromId(offer.getId())) {
+            throw new InvalidDocumentConversionException("This offer has already been converted to an invoice");
+        }
 
         String serviceDate = offer.getServiceDate();
         String now = LocalDateTime.now().toString();

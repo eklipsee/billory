@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 
@@ -81,7 +81,7 @@ function waitForBackend(maxAttempts = 30) {
     })
   }
 
-ipcMain.handle('dialog:select-pdf-file', async () => {
+  ipcMain.handle('dialog:select-pdf-file', async () => {
     const result = await dialog.showOpenDialog({
       title: 'PDF-Datei auswählen',
       filters: [
@@ -106,7 +106,7 @@ ipcMain.handle('dialog:select-pdf-file', async () => {
     return true
   })
 
-  ipcMain.handle('shell:open-folder', async (_event, fileOrFolderPath) => {
+ipcMain.handle('shell:open-folder', async (_event, fileOrFolderPath) => {
     if (!fileOrFolderPath) {
       return false
     }
@@ -118,6 +118,35 @@ ipcMain.handle('dialog:select-pdf-file', async () => {
     await shell.openPath(folderPath)
     return true
   })
+
+ipcMain.handle('billory:open-standard-folder', async (_event, folderName) => {
+  const basePath = path.join(
+    app.getPath('documents'),
+    'Billory'
+  )
+
+  const allowedFolders = [
+    'Rechnungen',
+    'Angebote',
+    'Mahnungen',
+    'Belege',
+    'Backups',
+  ]
+
+  if (!allowedFolders.includes(folderName)) {
+    return false
+  }
+
+  const targetPath = path.join(basePath, folderName)
+
+  if (!fs.existsSync(targetPath)) {
+    fs.mkdirSync(targetPath, { recursive: true })
+  }
+
+  await shell.openPath(targetPath)
+
+  return true
+})
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -137,6 +166,8 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   startBackend()
+
+  Menu.setApplicationMenu(null)
 
   try {
     await waitForBackend()

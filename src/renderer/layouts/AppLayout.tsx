@@ -1,3 +1,4 @@
+import logo from '../assets/tree.png'
 import type { AppPage } from '../types/navigation'
 
 type AppLayoutProps = {
@@ -7,14 +8,14 @@ type AppLayoutProps = {
   children: React.ReactNode
 }
 
-const navigationItems: { page: AppPage; label: string }[] = [
-  { page: 'dashboard', label: 'Dashboard' },
-  { page: 'customers', label: 'Kunden' },
-  { page: 'documents', label: 'Dokumente' },
-  { page: 'createDocument', label: 'Dokument erstellen' },
-  { page: 'externalInvoices', label: 'Belege' },
-  { page: 'export', label: 'Export' },
-  { page: 'settings', label: 'Einstellungen' },
+const navigationItems: { page: AppPage; label: string; icon: string }[] = [
+  { page: 'dashboard', label: 'Dashboard', icon: '▦' },
+  { page: 'customers', label: 'Kunden', icon: '👤' },
+  { page: 'documents', label: 'Dokumente', icon: '📄' },
+  { page: 'createDocument', label: 'Dokument erstellen', icon: '＋' },
+  { page: 'externalInvoices', label: 'Belege', icon: '🧾' },
+  { page: 'export', label: 'Export', icon: '⇩' },
+  { page: 'settings', label: 'Einstellungen', icon: '⚙' },
 ]
 
 export default function AppLayout({
@@ -26,26 +27,29 @@ export default function AppLayout({
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        <h1>Billory</h1>
+        <div className="sidebar-brand">
+          <img src={logo} alt="Baum Performance Stahl" />
+        </div>
 
-        <nav>
+        <nav className="sidebar-nav">
           {navigationItems.map((item) => (
             <button
-                key={item.page}
-                type="button"
-                className={
-                    activePage === item.page ? 'active' : ''
-                }
-                onClick={() => onNavigate(item.page)}
+              key={item.page}
+              type="button"
+              className={activePage === item.page ? 'active' : ''}
+              onClick={() => onNavigate(item.page)}
             >
-              {item.label}
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <button type="button" onClick={onLogout}>
-          Abmelden
-        </button>
+        <div className="sidebar-footer">
+          <button type="button" onClick={onLogout}>
+            Abmelden
+          </button>
+        </div>
       </aside>
 
       <section className="content">{children}</section>
