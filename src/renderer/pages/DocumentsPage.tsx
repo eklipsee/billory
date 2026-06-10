@@ -42,6 +42,7 @@ export default function DocumentsPage() {
   const [statusFilter, setStatusFilter] = useState<DocumentStatus | ''>('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   async function loadDocuments() {
     setIsLoading(true)
@@ -105,6 +106,7 @@ export default function DocumentsPage() {
 
       {isLoading && <p>Lade Dokumente...</p>}
       {error && <p className="error">{error}</p>}
+      {successMessage && <p>{successMessage}</p>}
 
       <p>
         {documents.length} Dokument(e) gefunden
@@ -149,10 +151,13 @@ export default function DocumentsPage() {
                     type="button"
                     onClick={async () => {
                       try {
+                        setSuccessMessage('')
                         const filePath =
                           await pdfApi.generateDocument(document.id)
 
-                        alert(`PDF erzeugt:\n${filePath.filePath}`)
+                        setSuccessMessage(
+                          `PDF erzeugt: ${filePath.filePath}`
+                        )
 
                         await loadDocuments()
                       } catch (error) {
@@ -172,10 +177,13 @@ export default function DocumentsPage() {
                     type="button"
                     onClick={async () => {
                       try {
+                        setSuccessMessage('')
                         const filePath =
                           await pdfApi.generateReminder(document.id)
 
-                        alert(`Mahnung erzeugt:\n${filePath.filePath}`)
+                        setSuccessMessage(
+                          `Mahnung erzeugt: ${filePath.filePath}`
+                        )
                       } catch (error) {
                         setError(
                           error instanceof Error
@@ -194,9 +202,12 @@ export default function DocumentsPage() {
                       type="button"
                       onClick={async () => {
                         try {
+                          setSuccessMessage('')
                           await documentApi.updateStatus(document.id, {
                             status: 'PAID',
                           })
+
+                          setSuccessMessage('Rechnung als bezahlt markiert.')
 
                           await loadDocuments()
                         } catch (error) {
@@ -217,12 +228,14 @@ export default function DocumentsPage() {
                       type="button"
                       onClick={async () => {
                         try {
+                          setSuccessMessage('')
+
                           const createdInvoice =
                             await documentApi.convertToInvoice({
                               offerId: document.id,
                             })
 
-                          alert(
+                          setSuccessMessage(
                             `Rechnung erstellt: ${createdInvoice.invoiceNumber || createdInvoice.id}`
                           )
 
@@ -240,6 +253,37 @@ export default function DocumentsPage() {
                     </button>
                   )}
 
+                  {document.type === 'OFFER' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const confirmed = window.confirm(
+                          'Dieses Angebot wirklich löschen?'
+                        )
+
+                        if (!confirmed) {
+                          return
+                        }
+
+                        try {
+                          setSuccessMessage('')
+
+                          await documentApi.delete(document.id)
+                          setSuccessMessage('Angebot wurde gelöscht.')
+                          await loadDocuments()
+                        } catch (error) {
+                          setError(
+                            error instanceof Error
+                              ? error.message
+                              : 'Angebot konnte nicht gelöscht werden.'
+                          )
+                        }
+                      }}
+                    >
+                      Angebot löschen
+                    </button>
+                  )}
+
                   {document.isHistorical && (
                     <button
                       type="button"
@@ -251,7 +295,7 @@ export default function DocumentsPage() {
                             sourceFilePath,
                           })
 
-                          alert('PDF wurde angehängt.')
+                          setSuccessMessage('PDF wurde angehängt.')
                           await loadDocuments()
                         } catch (error) {
                           setError(

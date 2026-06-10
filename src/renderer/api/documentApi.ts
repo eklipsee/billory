@@ -70,4 +70,10 @@ export const documentApi = {
       data
     )
   },
+
+  delete(id: number) {
+    return apiClient.delete<void>(
+      `/documents/${id}`
+    )
+  },
 }

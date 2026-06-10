@@ -182,3 +182,15 @@ export type ChangePasswordRequest = {
 export type SettingsCreateRequest = SettingsUpdateRequest & {
   password: string
 }
+
+export type ElectronAPI = {
+  selectPdfFile: () => Promise<string | null>
+  openFile: (filePath: string) => Promise<boolean>
+  openFolder: (folderPath: string) => Promise<boolean>
+}
+
+declare global {
+  interface Window {
+    electronAPI?: ElectronAPI
+  }
+}

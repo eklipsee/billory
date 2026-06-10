@@ -8,7 +8,7 @@
     "dev:electron": "wait-on tcp:5173 && electron .",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:electron\"",
     "build:renderer": "vite build",
-    "build": "electron-builder"
+    "build": "npm run build:renderer && electron-builder"
   },
   "repository": {
     "type": "git",
@@ -30,5 +30,37 @@
   "dependencies": {
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
+  },
+  "build": {
+    "appId": "de.billory.app",
+    "productName": "Billory",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "src/main/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/main/backend/backend.jar",
+        "to": "backend/backend.jar"
+      },
+      {
+        "from": "runtime",
+        "to": "runtime"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Billory"
+    }
   }
 }

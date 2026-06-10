@@ -25,6 +25,7 @@ export default function CreateDocumentPage() {
   },
 ])
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isHistorical, setIsHistorical] = useState(false)
   const [invoiceNumber, setInvoiceNumber] = useState('')
@@ -77,6 +78,7 @@ export default function CreateDocumentPage() {
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault()
         setError('')
+        setSuccessMessage('')
         setIsSaving(true)
 
         try {
@@ -122,7 +124,7 @@ export default function CreateDocumentPage() {
             setInvoiceNumber('')
             setHistoricalStatus('OPEN')
 
-            alert('Dokument wurde erstellt.')
+            setSuccessMessage('Dokument wurde erstellt.')
         } catch (error) {
             setError(
             error instanceof Error
@@ -145,6 +147,7 @@ export default function CreateDocumentPage() {
       <h2>Dokument erstellen</h2>
 
       {error && <p className="error">{error}</p>}
+      {successMessage && <p>{successMessage}</p>}
 
       <form onSubmit={handleSubmit}>
         <label>

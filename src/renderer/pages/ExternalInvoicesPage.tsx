@@ -94,19 +94,40 @@ export default function ExternalInvoicesPage() {
     }
   }
 
+  async function handleSelectPdf() {
+    if (!window.electronAPI) {
+      setError('Electron API nicht verfügbar.')
+      return
+    }
+
+    const selectedFile =
+      await window.electronAPI.selectPdfFile()
+
+    if (selectedFile) {
+      setSourceFilePath(selectedFile)
+    }
+  }
+
   return (
     <main>
       <h2>Externe Belege</h2>
 
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="PDF Pfad"
-          value={sourceFilePath}
-          onChange={(event) =>
-            setSourceFilePath(event.target.value)
-          }
-        />
+        <div>
+          <input
+            type="text"
+            value={sourceFilePath}
+            readOnly
+            placeholder="Keine PDF ausgewählt"
+          />
+
+          <button
+            type="button"
+            onClick={handleSelectPdf}
+          >
+            PDF auswählen
+          </button>
+        </div>
 
         <input
           type="date"
@@ -171,8 +192,23 @@ export default function ExternalInvoicesPage() {
         Aktualisieren
       </button>
 
+      <button
+        type="button"
+        onClick={async () => {
+          if (!window.electronAPI) {
+            setError('Electron API nicht verfügbar.')
+            return
+          }
+
+          await window.electronAPI.openFolder(sourceFilePath)
+        }}
+        disabled={!sourceFilePath}
+      >
+        Ordner öffnen
+      </button>
+
       {isLoading && <p>Lade Belege...</p>}
-      {error && <p>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
       {summary && (
         <p>
@@ -209,6 +245,20 @@ export default function ExternalInvoicesPage() {
               <td>{formatCurrency(item.grossAmount)}</td>
               <td>{item.filePath}</td>
               <td>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!window.electronAPI) {
+                      setError('Electron API nicht verfügbar.')
+                      return
+                    }
+
+                    await window.electronAPI.openFile(item.filePath)
+                  }}
+                >
+                  PDF öffnen
+                </button>
+
                 <button
                   type="button"
                   onClick={async () => {

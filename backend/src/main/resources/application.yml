@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:sqlite:billory.db
+    url: ${BILLORY_DB_URL:jdbc:sqlite:billory.db}
     driver-class-name: org.sqlite.JDBC
 
   jpa:

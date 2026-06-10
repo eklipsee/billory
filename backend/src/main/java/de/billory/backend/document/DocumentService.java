@@ -524,6 +524,10 @@ public class DocumentService {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Document not found"));
 
+        if (document.getType() == DocumentType.INVOICE) {
+            throw new InvalidDocumentDataException("Invoices must not be deleted");
+        }
+
         List<LineItem> lineItems =
                 lineItemRepository.findByDocumentIdOrderByPositionAsc(id);
 
