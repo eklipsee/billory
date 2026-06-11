@@ -196,6 +196,8 @@ export type ElectronAPI = {
   openFile: (filePath: string) => Promise<boolean>
   openFolder: (folderPath: string) => Promise<boolean>
   openBilloryFolder: (folderName: BilloryFolderName) => Promise<boolean>
+  maximizeApp: () => Promise<boolean>
+  restoreAuthSize: () => Promise<boolean>
 }
 
 declare global {
@@ -203,3 +205,4 @@ declare global {
     electronAPI: ElectronAPI
   }
 }
+

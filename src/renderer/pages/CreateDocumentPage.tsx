@@ -221,26 +221,38 @@ export default function CreateDocumentPage() {
               ))}
             </select>
 
-            <input
-              type="date"
-              value={documentDate}
-              onChange={(event) => setDocumentDate(event.target.value)}
-            />
+            <label>
+              Dokumentdatum
 
-            {type === 'INVOICE' && (
               <input
                 type="date"
-                value={serviceDate}
-                onChange={(event) => setServiceDate(event.target.value)}
+                value={documentDate}
+                onChange={(event) => setDocumentDate(event.target.value)}
               />
+            </label>
+
+            {type === 'INVOICE' && (
+              <label>
+                Leistungsdatum
+
+                <input
+                  type="date"
+                  value={serviceDate}
+                  onChange={(event) => setServiceDate(event.target.value)}
+                />
+              </label>
             )}
 
             {type === 'OFFER' && (
-              <input
-                type="date"
-                value={validUntil}
-                onChange={(event) => setValidUntil(event.target.value)}
-              />
+              <label>
+                Gültig bis
+
+                <input
+                  type="date"
+                  value={validUntil}
+                  onChange={(event) => setValidUntil(event.target.value)}
+                />
+              </label>
             )}
 
             <div className="full-width">

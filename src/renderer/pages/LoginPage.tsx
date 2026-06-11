@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { authApi } from '../api/authApi'
+import logo from '../assets/logo.png'
+import forest from '../assets/forest.png'
 
 type LoginPageProps = {
   onLoginSuccess: () => void
@@ -26,6 +28,8 @@ export default function LoginPage({
         return
       }
 
+      await window.electronAPI.maximizeApp()
+
       onLoginSuccess()
     } catch (error) {
       setError(
@@ -39,27 +43,43 @@ export default function LoginPage({
   }
 
   return (
-    <main>
-      <h1>Billory</h1>
-
-      <p>Bitte Passwort eingeben.</p>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          type="password"
-          placeholder="Passwort"
-          value={password}
-          onChange={(event) =>
-            setPassword(event.target.value)
-          }
+    <div className="auth-screen">
+      <div className="auth-card">
+        <img
+          src={logo}
+          alt="Baum Performance Stahl"
+          className="auth-logo"
         />
 
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Prüfe...' : 'Einloggen'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="auth-login-content">
+          <h2>Willkommen zurück</h2>
 
-      {error && <p className="error">{error}</p>}
-    </main>
+          <label>
+            Passwort
+
+            <input
+              type="password"
+              value={password}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              autoFocus
+            />
+          </label>
+
+          <button type="submit" className="primary-button" disabled={isLoading}>
+            {isLoading ? 'Prüfe...' : 'Anmelden'}
+          </button>
+
+          {error && <p className="auth-error">{error}</p>}
+        </form>
+
+        <img
+          src={forest}
+          alt=""
+          className="auth-forest"
+        />
+      </div>
+    </div>
   )
 }

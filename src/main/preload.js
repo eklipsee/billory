@@ -6,5 +6,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openFolder: (folderPath) => ipcRenderer.invoke('shell:open-folder', folderPath),
 
   openBilloryFolder: (folderName) =>
-    ipcRenderer.invoke('billory:open-standard-folder', folderName)
+    ipcRenderer.invoke('billory:open-standard-folder', folderName),
+
+  maximizeApp: () =>
+    ipcRenderer.invoke('window:maximize-app'),
+
+  restoreAuthSize: () =>
+    ipcRenderer.invoke('window:restore-auth-size')
 })

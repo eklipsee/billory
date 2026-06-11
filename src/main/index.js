@@ -150,8 +150,12 @@ ipcMain.handle('billory:open-standard-folder', async (_event, folderName) => {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 620,
+    height: 900,
+    minWidth: 620,
+    minHeight: 900,
+    resizable: false,
+    maximizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
@@ -163,6 +167,38 @@ function createWindow() {
     win.loadURL('http://localhost:5173')
   }
 }
+
+ipcMain.handle('window:maximize-app', async () => {
+  const win = BrowserWindow.getFocusedWindow()
+
+  if (!win) {
+    return false
+  }
+
+  win.setResizable(true)
+  win.setMaximizable(true)
+  win.maximize()
+
+  return true
+})
+
+ipcMain.handle('window:restore-auth-size', async () => {
+  const win = BrowserWindow.getFocusedWindow()
+
+  if (!win) {
+    return false
+  }
+
+  win.unmaximize()
+
+  win.setResizable(false)
+  win.setMaximizable(false)
+
+  win.setSize(620, 900)
+  win.center()
+
+  return true
+})
 
 app.whenReady().then(async () => {
   startBackend()

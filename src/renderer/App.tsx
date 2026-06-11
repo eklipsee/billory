@@ -10,6 +10,7 @@ import ExternalInvoicesPage from './pages/ExternalInvoicesPage'
 import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
 import CreateDocumentPage from './pages/CreateDocumentPage'
+import LoadingPage from './pages/LoadingPage'
 
 import { settingsApi } from './api/settingsApi'
 import SetupPage from './pages/SetupPage'
@@ -27,23 +28,39 @@ export default function App() {
 
   useEffect(() => {
     async function checkSetup() {
-      try {
-        await settingsApi.get()
+      const minimumLoadingTime = new Promise(
+        (resolve) => setTimeout(resolve, 5000)
+      )
 
-        const storedLogin = localStorage.getItem('isLoggedIn')
+      const setupCheck = (async () => {
+        try {
+          await settingsApi.get()
 
-        if (storedLogin === 'true') {
-          setIsLoggedIn(true)
+          const storedLogin =
+            localStorage.getItem('isLoggedIn')
+
+          if (storedLogin === 'true') {
+            setIsLoggedIn(true)
+          }
+
+          setNeedsSetup(false)
+        } catch {
+          setNeedsSetup(true)
+          localStorage.removeItem('isLoggedIn')
+          setIsLoggedIn(false)
         }
+      })()
 
-        setNeedsSetup(false)
-      } catch {
-        setNeedsSetup(true)
-        localStorage.removeItem('isLoggedIn')
-        setIsLoggedIn(false)
-      } finally {
-        setIsCheckingSetup(false)
+      await Promise.all([
+        minimumLoadingTime,
+        setupCheck,
+      ])
+
+      if (localStorage.getItem('isLoggedIn') === 'true') {
+        await window.electronAPI.maximizeApp()
       }
+
+      setIsCheckingSetup(false)
     }
 
     checkSetup()
@@ -54,7 +71,9 @@ export default function App() {
     setIsLoggedIn(true)
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    await window.electronAPI.restoreAuthSize()
+
     localStorage.removeItem('isLoggedIn')
     setIsLoggedIn(false)
   }
@@ -62,7 +81,11 @@ export default function App() {
   function renderPage() {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage />
+        return (
+          <DashboardPage
+            onNavigate={setActivePage}
+          />
+        )
 
       case 'customers':
         return <CustomersPage />
@@ -83,12 +106,16 @@ export default function App() {
         return <SettingsPage />
 
       default:
-        return <DashboardPage />
+        return (
+          <DashboardPage
+            onNavigate={setActivePage}
+          />
+        )
     }
   }
 
   if (isCheckingSetup) {
-    return <p>Prüfe Einrichtung...</p>
+    return <LoadingPage />
   }
 
   if (needsSetup) {
