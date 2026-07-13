@@ -36,6 +36,9 @@ public class Customer {
     @Column
     private String notes;
 
+    @Column(name = "distance_km")
+    private Double distanceKm;
+
     @Column(name = "created_at", nullable = false)
     private String created_at;
 
@@ -104,6 +107,14 @@ public class Customer {
 
     public void setNotes(String notes){
         this.notes = notes;
+    }
+
+    public Double getDistanceKm() {
+    return this.distanceKm;
+    }
+
+    public void setDistanceKm(Double distanceKm) {
+        this.distanceKm = distanceKm;
     }
 
     public String getCreatedAt(){

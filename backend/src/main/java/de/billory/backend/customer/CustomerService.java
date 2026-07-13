@@ -45,6 +45,7 @@ public class CustomerService {
     customer.setEmail(request.getEmail());
     customer.setPhone(request.getPhone());
     customer.setNotes(request.getNotes());
+    customer.setDistanceKm(request.getDistanceKm());
 
     String now = LocalDateTime.now().toString();
     customer.setCreatedAt(now);
@@ -87,6 +88,7 @@ public class CustomerService {
         customer.setEmail(request.getEmail());
         customer.setPhone(request.getPhone());
         customer.setNotes(request.getNotes());
+        customer.setDistanceKm(request.getDistanceKm());
         customer.setUpdatedAt(LocalDateTime.now().toString());
 
         return toResponse(customerRepository.save(customer));
@@ -103,6 +105,7 @@ public class CustomerService {
         response.setEmail(customer.getEmail());
         response.setPhone(customer.getPhone());
         response.setNotes(customer.getNotes());
+        response.setDistanceKm(customer.getDistanceKm());
         response.setCreatedAt(customer.getCreatedAt());
         response.setUpdatedAt(customer.getUpdatedAt());
 

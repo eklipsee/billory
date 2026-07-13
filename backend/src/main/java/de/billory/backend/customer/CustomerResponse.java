@@ -10,6 +10,7 @@ public class CustomerResponse {
     private String email;
     private String phone;
     private String notes;
+    private Double distanceKm;
     private String createdAt;
     private String updatedAt;
 
@@ -76,8 +77,16 @@ public class CustomerResponse {
         return notes;
     }
 
+    public Double getDistanceKm() {
+        return distanceKm;
+    }
+
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public void setDistanceKm(Double distanceKm) {
+        this.distanceKm = distanceKm;
     }
 
     public String getCreatedAt() {

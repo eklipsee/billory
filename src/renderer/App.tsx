@@ -66,6 +66,12 @@ export default function App() {
     checkSetup()
   }, [])
 
+  useEffect(() => {
+  if (!isCheckingSetup && needsSetup) {
+    window.electronAPI.showSetupSize()
+  }
+}, [isCheckingSetup, needsSetup])
+
   function handleLoginSuccess() {
     localStorage.setItem('isLoggedIn', 'true')
     setIsLoggedIn(true)
@@ -121,7 +127,9 @@ export default function App() {
   if (needsSetup) {
     return (
       <SetupPage
-        onSetupComplete={() => {
+        onSetupComplete={async () => {
+          await window.electronAPI.restoreAuthSize()
+
           localStorage.removeItem('isLoggedIn')
           setIsLoggedIn(false)
           setNeedsSetup(false)

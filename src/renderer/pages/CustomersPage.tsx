@@ -12,6 +12,7 @@ type CustomerFormState = {
   email: string
   phone: string
   notes: string
+  distanceKm: string
 }
 
 const emptyForm: CustomerFormState = {
@@ -22,6 +23,7 @@ const emptyForm: CustomerFormState = {
   email: '',
   phone: '',
   notes: '',
+  distanceKm: '',
 }
 
 export default function CustomersPage() {
@@ -80,9 +82,21 @@ export default function CustomersPage() {
 
     try {
       if (editingCustomerId === null) {
-        await customerApi.create(form)
+        await customerApi.create({
+          ...form,
+          distanceKm:
+            form.distanceKm.trim() === ''
+              ? undefined
+              : Number(form.distanceKm),
+        })
       } else {
-        await customerApi.update(editingCustomerId, form)
+        await customerApi.update(editingCustomerId, {
+          ...form,
+          distanceKm:
+            form.distanceKm.trim() === ''
+              ? undefined
+              : Number(form.distanceKm),
+        })
       }
 
       closeForm()
@@ -194,6 +208,20 @@ export default function CustomersPage() {
               />
             </label>
 
+            <label>
+              Entfernung (km)
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                placeholder="z. B. 18.5"
+                value={form.distanceKm}
+                onChange={(event) =>
+                  updateForm('distanceKm', event.target.value)
+                }
+              />
+            </label>
+
             <label className="notes-field">
               Notizen
               <input
@@ -227,6 +255,7 @@ export default function CustomersPage() {
               <th>Adresse</th>
               <th>E-Mail</th>
               <th>Telefon</th>
+              <th>Entfernung</th>
               <th>Aktionen</th>
             </tr>
           </thead>
@@ -234,7 +263,7 @@ export default function CustomersPage() {
           <tbody>
             {customers.length === 0 && (
               <tr>
-                <td colSpan={5}>Keine Kunden gefunden.</td>
+                <td colSpan={6}>Keine Kunden gefunden.</td>
               </tr>
             )}
 
@@ -246,6 +275,11 @@ export default function CustomersPage() {
                 </td>
                 <td>{customer.email || '-'}</td>
                 <td>{customer.phone || '-'}</td>
+                <td>
+                  {customer.distanceKm != null
+                    ? `${customer.distanceKm.toLocaleString('de-DE')} km`
+                    : '-'}
+                </td>
                 <td>
                   <div className="table-actions">
                     <button
@@ -264,6 +298,10 @@ export default function CustomersPage() {
                           email: customer.email || '',
                           phone: customer.phone || '',
                           notes: customer.notes || '',
+                          distanceKm:
+                            customer.distanceKm != null
+                              ? String(customer.distanceKm)
+                              : '',
                         })
                       }}
                     >

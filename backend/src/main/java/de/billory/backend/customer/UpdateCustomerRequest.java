@@ -19,6 +19,7 @@ public class UpdateCustomerRequest {
     private String email;
     private String phone;
     private String notes;
+    private Double distanceKm;
 
     public UpdateCustomerRequest() {
     }
@@ -51,6 +52,10 @@ public class UpdateCustomerRequest {
         return notes;
     }
 
+    public Double getDistanceKm() {
+        return distanceKm;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -77,5 +82,9 @@ public class UpdateCustomerRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public void setDistanceKm(Double distanceKm) {
+        this.distanceKm = distanceKm;
     }
 }

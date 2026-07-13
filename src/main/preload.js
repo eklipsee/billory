@@ -12,5 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('window:maximize-app'),
 
   restoreAuthSize: () =>
-    ipcRenderer.invoke('window:restore-auth-size')
+    ipcRenderer.invoke('window:restore-auth-size'),
+
+  showSetupSize: () =>
+    ipcRenderer.invoke('window:show-setup-size')
 })

@@ -22,6 +22,7 @@ export type Customer = {
   email?: string | null
   phone?: string | null
   notes?: string | null
+  distanceKm?: number | null
   createdAt?: string
   updatedAt?: string
 }
@@ -34,6 +35,7 @@ export type CustomerCreateRequest = {
   email?: string
   phone?: string
   notes?: string
+  distanceKm?: number
 }
 
 export type CustomerUpdateRequest = CustomerCreateRequest
@@ -198,6 +200,7 @@ export type ElectronAPI = {
   openBilloryFolder: (folderName: BilloryFolderName) => Promise<boolean>
   maximizeApp: () => Promise<boolean>
   restoreAuthSize: () => Promise<boolean>
+  showSetupSize: () => Promise<boolean>
 }
 
 declare global {

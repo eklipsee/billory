@@ -183,6 +183,34 @@ ipcMain.handle('window:maximize-app', async () => {
 })
 
 ipcMain.handle('window:restore-auth-size', async () => {
+  const win =
+    BrowserWindow.getFocusedWindow() ??
+    BrowserWindow.getAllWindows()[0]
+
+  if (!win || win.isDestroyed()) {
+    return false
+  }
+
+  if (win.isMaximized()) {
+    win.unmaximize()
+  }
+
+  win.setResizable(true)
+
+  win.setBounds({
+    width: 620,
+    height: 900,
+  })
+
+  win.center()
+
+  win.setResizable(false)
+  win.setMaximizable(false)
+
+  return true
+})
+
+ipcMain.handle('window:show-setup-size', async () => {
   const win = BrowserWindow.getFocusedWindow()
 
   if (!win) {
@@ -194,7 +222,7 @@ ipcMain.handle('window:restore-auth-size', async () => {
   win.setResizable(false)
   win.setMaximizable(false)
 
-  win.setSize(620, 900)
+  win.setSize(1280, 900)
   win.center()
 
   return true
