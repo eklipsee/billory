@@ -149,6 +149,8 @@ ipcMain.handle('billory:open-standard-folder', async (_event, folderName) => {
 })
 
 function createWindow() {
+  const iconPath = path.join(__dirname, '../../build/icon.ico')
+  console.log('Icon-Pfad:', iconPath, 'Gefunden:', fs.existsSync(iconPath))
   const win = new BrowserWindow({
     width: 620,
     height: 900,
@@ -156,6 +158,7 @@ function createWindow() {
     minHeight: 900,
     resizable: false,
     maximizable: false,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }

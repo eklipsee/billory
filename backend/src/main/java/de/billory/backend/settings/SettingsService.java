@@ -14,6 +14,35 @@ import java.io.IOException;
 public class SettingsService {
 
     private static final Integer SETTINGS_ID = 1;
+
+    private static final String DEFAULT_PRIVACY_NOTICE = """
+    Datenschutzhinweise
+
+    Verantwortlicher für die Verarbeitung Ihrer personenbezogenen Daten ist das im Dokument genannte Unternehmen. Die Kontaktdaten entnehmen Sie bitte dem Briefkopf beziehungsweise der Fußzeile dieses Dokuments.
+
+    Wir verarbeiten Ihre personenbezogenen Daten ausschließlich zur Bearbeitung Ihrer Anfrage, zur Durchführung vorvertraglicher Maßnahmen, zur Vertragserfüllung, zur Rechnungsstellung sowie zur Erfüllung gesetzlicher Aufbewahrungspflichten.
+
+    Rechtsgrundlagen der Verarbeitung sind insbesondere Art. 6 Abs. 1 lit. b und lit. c DSGVO.
+
+    Eine Weitergabe Ihrer Daten erfolgt ausschließlich, soweit dies zur Vertragsabwicklung erforderlich oder gesetzlich vorgeschrieben ist.
+
+    Ihre Daten werden nur so lange gespeichert, wie dies zur Erfüllung der genannten Zwecke oder aufgrund gesetzlicher Aufbewahrungsfristen erforderlich ist.
+
+    Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch nach Maßgabe der DSGVO. Außerdem steht Ihnen ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde zu.
+    """;
+
+    private static final String DEFAULT_WITHDRAWAL_NOTICE = """
+    Widerrufsbelehrung für Verbraucher
+
+    Sofern Sie Verbraucher sind und der Vertrag im Fernabsatz oder außerhalb unserer Geschäftsräume geschlossen wird, steht Ihnen grundsätzlich ein gesetzliches Widerrufsrecht von vierzehn Tagen zu.
+
+    Zur Ausübung des Widerrufs genügt eine eindeutige Erklärung gegenüber dem im Dokument genannten Unternehmen, beispielsweise per Brief oder E-Mail.
+
+    Zur Wahrung der Frist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.
+
+    Bei individuell angefertigten Waren oder Leistungen kann das gesetzliche Widerrufsrecht ausgeschlossen oder eingeschränkt sein. Es gelten die gesetzlichen Bestimmungen der §§ 312g und 355 BGB.
+    """;
+
     private final PasswordEncoder passwordEncoder;
     private final SettingsRepository settingsRepository;
 
@@ -60,8 +89,18 @@ public class SettingsService {
         settings.setBackupPath(basePath + "/Backups");
         settings.setReceiptsPath(basePath + "/Belege");
         settings.setReminderTemplate(request.getReminderTemplate());
-        settings.setInvoicePrivacyNotice(request.getInvoicePrivacyNotice());
-        settings.setOfferWithdrawalNotice(request.getOfferWithdrawalNotice());
+
+        settings.setInvoicePrivacyNotice(
+                hasText(request.getInvoicePrivacyNotice())
+                        ? request.getInvoicePrivacyNotice()
+                        : DEFAULT_PRIVACY_NOTICE
+        );
+
+        settings.setOfferWithdrawalNotice(
+                hasText(request.getOfferWithdrawalNotice())
+                        ? request.getOfferWithdrawalNotice()
+                        : DEFAULT_WITHDRAWAL_NOTICE
+        );
         settings.setCreatedAt(now);
         settings.setUpdatedAt(now);
 
@@ -142,5 +181,9 @@ public class SettingsService {
         response.setUpdatedAt(settings.getUpdatedAt());
 
         return response;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

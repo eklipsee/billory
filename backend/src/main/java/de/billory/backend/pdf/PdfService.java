@@ -121,10 +121,10 @@ public class PdfService {
             addInvoiceLikeMetaLine(pdfDocument, documentData, metaFont, smallFont);
             addInvoiceLikeItemsTable(pdfDocument, lineItems, tableHeaderFont, normalFont);
             addInvoiceLikeTotals(pdfDocument, documentData, totalFont);
-            addInvoiceLikePaymentNotice(pdfDocument, documentData, settings, normalFont);
+            addInvoiceLikePaymentNotice(pdfDocument, documentData, normalFont);
+            addLegalNoticePage(pdfDocument, documentData, settings, normalFont);
 
             pdfDocument.close();
-
             documentService.updatePdfPath(documentId, pdfPath.toAbsolutePath().toString());
             documentService.markDocumentAsOpenIfDraft(documentId);
             return pdfPath.toAbsolutePath().toString();
@@ -402,18 +402,22 @@ public class PdfService {
         pdfDocument.add(table);
     }
 
-    private void addInvoiceLikePaymentNotice(com.lowagie.text.Document pdfDocument,
-                                             Document documentData,
-                                             Settings settings,
-                                             Font normalFont) throws DocumentException {
+    private void addInvoiceLikePaymentNotice(
+        com.lowagie.text.Document pdfDocument,
+        Document documentData,
+        Font normalFont
+    ) throws DocumentException {
+
         PdfPTable topLine = new PdfPTable(1);
         topLine.setWidthPercentage(100);
         topLine.setSpacingAfter(22f);
+
         PdfPCell topLineCell = new PdfPCell();
         topLineCell.setBorder(Rectangle.BOTTOM);
         topLineCell.setBorderColor(Color.GRAY);
         topLineCell.setFixedHeight(1f);
         topLineCell.setPadding(0f);
+
         topLine.addCell(topLineCell);
         pdfDocument.add(topLine);
 
@@ -423,20 +427,65 @@ public class PdfService {
                     normalFont,
                     0f
             ));
+        }
+    }
 
-            if (hasText(settings.getInvoicePrivacyNotice())) {
-                String cleanedNotice = settings.getInvoicePrivacyNotice()
-                        .replace("aus den setting:", "")
-                        .trim();
+    private void addLegalNoticePage(
+        com.lowagie.text.Document pdfDocument,
+        Document documentData,
+        Settings settings,
+        Font normalFont
+    ) throws DocumentException {
 
-                Paragraph notice = createParagraph(cleanedNotice, normalFont, 0f);
-                notice.setSpacingBefore(12f);
-                pdfDocument.add(notice);
-            }
+        String privacyNotice = settings.getInvoicePrivacyNotice();
+
+        if (hasText(privacyNotice)) {
+            privacyNotice = privacyNotice
+                    .replace("aus den setting:", "")
+                    .trim();
         }
 
-        if (documentData.getType() == DocumentType.OFFER && hasText(settings.getOfferWithdrawalNotice())) {
-            pdfDocument.add(createParagraph(settings.getOfferWithdrawalNotice(), normalFont, 0f));
+        String withdrawalNotice = settings.getOfferWithdrawalNotice();
+
+        boolean hasPrivacyNotice = hasText(privacyNotice);
+        boolean hasWithdrawalNotice = hasText(withdrawalNotice);
+
+        if (documentData.getType() == DocumentType.INVOICE && !hasPrivacyNotice) {
+            return;
+        }
+
+        if (documentData.getType() == DocumentType.OFFER
+                && !hasPrivacyNotice
+                && !hasWithdrawalNotice) {
+            return;
+        }
+
+        pdfDocument.newPage();
+        addTopLogoSpacer(pdfDocument);
+
+        if (hasPrivacyNotice) {
+            Paragraph privacyParagraph = createParagraph(
+                    privacyNotice,
+                    normalFont,
+                    documentData.getType() == DocumentType.OFFER
+                            && hasWithdrawalNotice
+                            ? 18f
+                            : 0f
+            );
+
+            pdfDocument.add(privacyParagraph);
+        }
+
+        if (documentData.getType() == DocumentType.OFFER
+                && hasWithdrawalNotice) {
+
+            Paragraph withdrawalParagraph = createParagraph(
+                    withdrawalNotice,
+                    normalFont,
+                    0f
+            );
+
+            pdfDocument.add(withdrawalParagraph);
         }
     }
 
